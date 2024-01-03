@@ -367,10 +367,7 @@
                     dataSql +=" , release_no";
                     dataSql +=" , delv_fee";
 					dataSql +=" , spec";
-					dataSql +=" , agency_name";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , tel_no";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , address";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , ceo_name ";/*Cuong add for printing 2023-12-28*/
+					dataSql +=" , plate_no3 ";/*Cuong add for printing 2024-01-03*/
                     dataSql +=" from (select a.start_wh_cd";
                     dataSql +=" , wh.wh_nm";
                     dataSql +=" , a.release_no";
@@ -413,10 +410,7 @@
                     dataSql +=" , b.agency_order_no";
                     dataSql +=" , a.delv_fee";
 					dataSql +=" , item.spec";
-					dataSql +=" ,ag.agency_name";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , cust.tel_no";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , cust.address";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , cust.ceo_name ";/*Cuong add for printing 2023-12-28*/
+					dataSql +=" , z.plate_no3 ";/*Cuong add for printing 2024-01-03*/
                     dataSql +=" from tb_release_wh a";
                     dataSql +=" left join tb_release_wh_detail b on b.release_no = a.release_no";
                     dataSql +=" left join tb_ma_agency ag on ag.agency_cd = a.end_agency_cd";
@@ -427,7 +421,7 @@
                     dataSql +=" left join vw_ma_code_release_status rs on rs.release_status = a.release_status ";
                     dataSql +=" left join vw_ma_item_parts_option ot1 on ot1.option_item_cd = b.option_1 and ot1.item_cd = b.item_cd and ot1.parts_option_type = 'W' ";
                     dataSql +=" left join vw_ma_item_parts_option ot3 on ot3.option_item_cd = b.option_3 and ot3.item_cd = b.item_cd and ot3.parts_option_type = 'H' ";
-                    dataSql +=" left join tb_ma_cust cust on cust.cust_cd = 'YNK00132' ";/*Cuong add for printing 2023-12-28*/
+                    dataSql +=" LEFT JOIN tb_manufacture_work z ON z.prod_item_cd  = b.item_cd AND z.serial_id  = b.serial_id ";/*Cuong add for printing 2024-01-03*/
                     dataSql +=" group by a.release_no, b.sorder with rollup) a";
                     dataSql +=" where a.sorder is not null)";
                     dataSql +=" union all";
@@ -474,10 +468,7 @@
                     dataSql +=" , release_no as release_no_print";
                     dataSql +=" , delv_fee";
 					dataSql +=" , spec";
-					dataSql +=" , agency_name";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , tel_no";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , address";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , ceo_name ";/*Cuong add for printing 2023-12-28*/
+					dataSql +=" , plate_no3 ";/*Cuong add for printing 2024-01-03*/
                     dataSql +=" from (select a.start_wh_cd";
                     dataSql +=" , wh.wh_nm";
                     dataSql +=" , a.release_no";
@@ -520,10 +511,7 @@
                     dataSql +=" , '' as agency_order_no";
                     dataSql +=" , a.delv_fee";
 					dataSql +=" , item.spec";
-					dataSql +=" ,ag.agency_name";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , cust.tel_no";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , cust.address";/*Cuong add for printing 2023-12-28*/
-					dataSql +=" , cust.ceo_name ";/*Cuong add for printing 2023-12-28*/
+					dataSql +=" , z.plate_no3 ";/*Cuong add for printing 2024-01-03*/
                     dataSql +=" from tb_release_storage a";
                     dataSql +=" left join tb_release_storage_detail b on b.release_no = a.release_no";
                     dataSql +=" left join tb_ma_agency ag on ag.agency_cd = a.end_agency_cd";
@@ -534,7 +522,7 @@
                     dataSql +=" left join vw_ma_code_release_status rs on rs.release_status = a.release_status";
                     dataSql +=" left join vw_ma_item_parts_option ot1 on ot1.option_item_cd = b.option_1 and ot1.item_cd = b.item_cd and ot1.parts_option_type = 'W'";
                     dataSql +=" left join vw_ma_item_parts_option ot3 on ot3.option_item_cd = b.option_3 and ot3.item_cd = b.item_cd and ot3.parts_option_type = 'H'";
-                    dataSql +=" left join tb_ma_cust cust on cust.cust_cd = 'YNK00132' ";/*Cuong add for printing 2023-12-28*/
+                    dataSql +=" LEFT JOIN tb_manufacture_work z ON z.prod_item_cd  = b.item_cd AND z.serial_id  = b.serial_id ";/*Cuong add for printing 2024-01-03*/
                     dataSql +=" group by a.release_no, b.sorder with rollup) a";
                     dataSql +=" where a.sorder is not null)) a WHERE";
                     dataSql +=" a.release_no = '"+releaseNo+"'";
@@ -543,15 +531,24 @@
                     dataSql +=" SUBSTRING( a.release_no, 1, 7 ),";
                     dataSql +=" SUBSTRING( a.release_no, 9, 3 ))";
                   List<Map<String, Object>> data = selectAllQuery(conn,dataSql);
-                  
+                  List<Map<String, Object>> item_data = new ArrayList<>();;
+                  String dataSql1;
+                  for(int i = 0 ; i < data.size() ; i ++){
+                      String item_cd = data.get(i).get("item_cd").toString();
+                      dataSql1 = "select * from tb_ma_item_sale_option where option_item_type = 'PROD' and prod_option_type = '부대품' and item_cd = '"+item_cd+"'";
+                      item_data = selectAllQuery(conn, dataSql1);
+                  }
+                 
                   dataSql = "select cust_name, tel_no, address, ceo_name from tb_ma_cust where cust_cd = 'YNK00132'";
                   Map<String, Object> driver_data = selectFirstQuery(conn, dataSql);
-
+                  
+                
                 Map<String, Object> response_data = new HashMap<>();
                 response_data.put("status", 200);
                 response_data.put("message", "OK");
                 response_data.put("res", data);
                 response_data.put("driver", driver_data);
+                response_data.put("item", item_data);
                 response_data.put("sql", dataSql);
                 String jsonString = new Gson().toJson(response_data);
                 out.write(jsonString);

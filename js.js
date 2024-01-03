@@ -47,7 +47,7 @@ function getData() {
         let release_qty = item.release_qty || "";
         let machine_no = item.machine_no || "";
         let built_no = item.built_no || "";
-        let car_no = item.car_no || "";
+        let plate_no3 = item.plate_no3 || "";
         let option_1 = item.option_1 || "";
         option_1 = option_1 == "Y" ? "X" : "";
 
@@ -59,7 +59,7 @@ function getData() {
                       <td style="width: 37px; "><span class="release_qty">${release_qty}</span></td>
                       <td style="width: 89px; "><span class="machine_no">${machine_no}</span></td>
                       <td style="width: 72px; "><span class="built_no">${built_no}</span></td>
-                      <td style="width: 73px; "><span class="car_no">${car_no}</span></td>
+                      <td style="width: 73px; "><span class="plate_no3">${plate_no3}</span></td>
                       <td style="width: 40px; "><span class="option_1">${option_1}</span></td>
                 </tr>
                 `;
