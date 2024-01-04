@@ -87,12 +87,17 @@ function getData() {
       $("#load_type_id").text(load_type);
       $("#delv_cust_remark_id").text(delv_cust_remark);
 
+      $("#driver_name_id_sub").text("운전자명 : " + driver_name);
+      $("#car_no_id_sub").text(car_no);
+      $("#agency_name_id_sub").text(region + " " + agency_name);
+      $("#end_agency_address_id_sub").text(end_agency_address);
+      $("#date_ko_render_sub").text("출하일자 : " + release_order_date_ko);
+
       $("#agency_name_id").text(region + " " + agency_name);
       $("#agency_name_id_2").text(region + " " + agency_name);
       $("#end_agency_address_id").text(end_agency_address);
       $("#end_agency_address_id_2").text(end_agency_address);
       $("#end_agency_tel_no_id").text(end_agency_tel_no);
-      // $("#date_ko_render_2").text(release_order_date_ko);
     },
     error: function (xmlHttpRequest, txtStatus, errorThrown) {
       console.log("erorr");
