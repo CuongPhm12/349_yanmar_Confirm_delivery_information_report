@@ -473,7 +473,7 @@
                     dataSql +=" , wh.wh_nm";
                     dataSql +=" , a.release_no";
                     dataSql +=" , b.sorder";
-                    dataSql +=" , od.address_detail";
+                    dataSql +=" , '' address_detail";
                     dataSql +=" , a.load_type";
                     dataSql +=" , a.driver_name";
                     dataSql +=" , a.driver_tel_no";
@@ -487,8 +487,8 @@
                     dataSql +=" , SUM(ifnull(b.release_qty,0)) as release_qty";
 					dataSql +=" , ot1.option_name as option_1_name";
                     dataSql +=" , ot3.option_name as option_3_name";
-                    dataSql +=" , od.agency_remark";
-                    dataSql +=" , od.ynk_remark";
+                    dataSql +=" , '' agency_remark";
+                    dataSql +=" , '' ynk_remark";
                     dataSql +=" , serial.machine_no";
                     dataSql +=" , serial.built_no";
                     dataSql +=" , serial.engine_no";

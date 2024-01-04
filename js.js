@@ -28,8 +28,11 @@ function getData() {
     data: data_Send,
     async: false,
     success: function (response, status, request) {
-      const { res, sql, driver } = response;
+      const { res, sql, driver, item } = response;
       console.log(response);
+      if (item.length <= 0) {
+        $(".page-break").hide();
+      }
       let total = 0;
       var is_completee = "";
       let delv_comp_name = driver.cust_name || "";
