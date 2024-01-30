@@ -116,6 +116,7 @@
                                 pstmt.executeUpdate();
                                 addHistory(sql);
                                 
+                                /* 2024.01.29 by jplee : 상차전검사에서 UPDATE하도록 변경
                                 sql =  " update tb_agency_order a join tb_release_wh_detail b on b.agency_order_no = a.agency_order_no set a.agency_order_status = '출고준비완료' where b.release_no = " + row.get("release_no") + " and a.agency_order_status = '출하의뢰'";
                                 logger.info("update tb_agency_order");
                                 logger.info(sql);
@@ -126,6 +127,7 @@
                                 sql = "update tb_stock set release_order_date = ifnull(release_order_date, date_format(now(), '%Y-%m-%d')) where stock_id = " + list.get(i).get("stock_id");
                                 pstmt = conn.prepareStatement(sql);
                                 pstmt.executeUpdate();
+                                */
                             }
                         }
                         if (handle_type.equals("storage")) {
@@ -531,12 +533,16 @@
                     dataSql +=" SUBSTRING( a.release_no, 1, 7 ),";
                     dataSql +=" SUBSTRING( a.release_no, 9, 3 ))";
                   List<Map<String, Object>> data = selectAllQuery(conn,dataSql);
-                  List<Map<String, Object>> item_data = new ArrayList<>();;
+                 
                   String dataSql1;
+                  List <List> list_total = new ArrayList<>();
                   for(int i = 0 ; i < data.size() ; i ++){
+                     List<Map<String, Object>> item_data = new ArrayList<>();
                       String item_cd = data.get(i).get("item_cd").toString();
-                      dataSql1 = "select * from tb_ma_item_sale_option where option_item_type = 'PROD' and prod_option_type = '부대품' and item_cd = '"+item_cd+"'";
+                      dataSql1 = "select a.*,b.item_name,b.spec,b.unit,b.sales_cd from tb_ma_item_sale_option a JOIN vw_ma_item b on a.item_cd = b.item_cd where a.option_item_type = 'PROD' and a.prod_option_type = '부대품' and a.item_cd = '"+item_cd+"'";
                       item_data = selectAllQuery(conn, dataSql1);
+                      list_total.add(item_data);
+                  
                   }
                  
                   dataSql = "select cust_name, tel_no, address, ceo_name from tb_ma_cust where cust_cd = 'YNK00132'";
@@ -548,7 +554,7 @@
                 response_data.put("message", "OK");
                 response_data.put("res", data);
                 response_data.put("driver", driver_data);
-                response_data.put("item", item_data);
+                response_data.put("item", list_total);
                 response_data.put("sql", dataSql);
                 String jsonString = new Gson().toJson(response_data);
                 out.write(jsonString);
