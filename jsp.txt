@@ -370,6 +370,7 @@
                     dataSql +=" , delv_fee";
 					dataSql +=" , spec";
 					dataSql +=" , plate_no3 ";/*Cuong add for printing 2024-01-03*/
+					dataSql +=" , prod_type1 ";/*Cuong add for printing 2024-02-01*/
                     dataSql +=" from (select a.start_wh_cd";
                     dataSql +=" , wh.wh_nm";
                     dataSql +=" , a.release_no";
@@ -407,12 +408,13 @@
                     dataSql +=" , a.delv_cust_remark";
                     dataSql +=" , a.load_finish_yn";
                     dataSql +=" , b.stock_id";
-                    dataSql +=" , b.serial_id";
+                    dataSql +=" , ifnull(b.serial_id,'') serial_id";
                     dataSql +=" , od.release_order_no";
                     dataSql +=" , b.agency_order_no";
                     dataSql +=" , a.delv_fee";
 					dataSql +=" , item.spec";
 					dataSql +=" , z.plate_no3 ";/*Cuong add for printing 2024-01-03*/
+					dataSql +=" , ifnull(item.prod_type1,'') prod_type1 ";/*Cuong add for printing 2024-02-01*/
                     dataSql +=" from tb_release_wh a";
                     dataSql +=" left join tb_release_wh_detail b on b.release_no = a.release_no";
                     dataSql +=" left join tb_ma_agency ag on ag.agency_cd = a.end_agency_cd";
@@ -471,6 +473,7 @@
                     dataSql +=" , delv_fee";
 					dataSql +=" , spec";
 					dataSql +=" , plate_no3 ";/*Cuong add for printing 2024-01-03*/
+					dataSql +=" , prod_type1 ";/*Cuong add for printing 2024-02-01*/
                     dataSql +=" from (select a.start_wh_cd";
                     dataSql +=" , wh.wh_nm";
                     dataSql +=" , a.release_no";
@@ -508,12 +511,13 @@
                     dataSql +=" , a.delv_cust_remark";
                     dataSql +=" , a.load_finish_yn";
                     dataSql +=" , b.stock_id";
-                    dataSql +=" , b.serial_id";
+                    dataSql +=" , ifnull(b.serial_id,'') serial_id ";
                     dataSql +=" , od.release_order_no";
                     dataSql +=" , '' as agency_order_no";
                     dataSql +=" , a.delv_fee";
 					dataSql +=" , item.spec";
 					dataSql +=" , z.plate_no3 ";/*Cuong add for printing 2024-01-03*/
+					dataSql +=" , ifnull(item.prod_type1,'') prod_type1 ";/*Cuong add for printing 2024-02-01*/
                     dataSql +=" from tb_release_storage a";
                     dataSql +=" left join tb_release_storage_detail b on b.release_no = a.release_no";
                     dataSql +=" left join tb_ma_agency ag on ag.agency_cd = a.end_agency_cd";
@@ -535,13 +539,25 @@
                   List<Map<String, Object>> data = selectAllQuery(conn,dataSql);
                  
                   String dataSql1;
+                  String dataSql2;
                   List <List> list_total = new ArrayList<>();
+                  List <List> list_plate_no = new ArrayList<>();
                   for(int i = 0 ; i < data.size() ; i ++){
                      List<Map<String, Object>> item_data = new ArrayList<>();
+                     List<Map<String, Object>> plate_no_data = new ArrayList<>();
+                //  Map<String, Object> plate_no_data = new HashMap<>();
+   
                       String item_cd = data.get(i).get("item_cd").toString();
-                      dataSql1 = "select a.*,b.item_name,b.spec,b.unit,b.sales_cd from tb_ma_item_sale_option a JOIN vw_ma_item b on a.item_cd = b.item_cd where a.option_item_type = 'PROD' and a.prod_option_type = '부대품' and a.item_cd = '"+item_cd+"'";
+                      String serial_id = data.get(i).get("serial_id").toString();
+                      if(serial_id==null)serial_id="0";
+                      dataSql1 = "select a.*,b.item_name,b.spec,b.unit,b.sales_cd,b.prod_type1, ifnull(b.sales_cd, b.item_no) option_sales_cd from tb_ma_item_sale_option a JOIN vw_ma_item b on a.option_item_cd  = b.item_cd where a.option_item_type = 'PROD' and a.prod_option_type = '부대품' and a.item_cd = '"+item_cd+"'";
                       item_data = selectAllQuery(conn, dataSql1);
                       list_total.add(item_data);
+                      
+                      dataSql2 = "select plate_no3 from tb_manufacture_work where prod_item_cd = '"+item_cd+"' and serial_id = '"+serial_id+"'" ;
+                      plate_no_data = selectAllQuery(conn, dataSql2);
+                      
+                      list_plate_no.add(plate_no_data);
                   
                   }
                  
@@ -555,6 +571,7 @@
                 response_data.put("res", data);
                 response_data.put("driver", driver_data);
                 response_data.put("item", list_total);
+                response_data.put("plate_no", list_plate_no);
                 response_data.put("sql", dataSql);
                 String jsonString = new Gson().toJson(response_data);
                 out.write(jsonString);
