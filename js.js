@@ -2,6 +2,7 @@ $("#release_no_table").hide();
 $(".page-break0").hide();
 $(".page-break1").hide();
 $(".page-break2").hide();
+$(".336-print").hide();
 
 getData();
 function getData() {
@@ -32,8 +33,156 @@ function getData() {
     data: data_Send,
     async: false,
     success: function (response, status, request) {
-      const { res, sql, driver, item } = response;
+      const { res, sql, driver, item, list_336 } = response;
       console.log(response);
+      if (!list_336[0][0] || !list_336[0][0].ng_type) {
+        $("#no_line_1").css({
+          "font-weight": "bold",
+          "text-decoration": "underline",
+        });
+        $("#no_line_2").css({
+          "font-weight": "bold",
+          "text-decoration": "underline",
+        });
+      } else {
+        if (list_336[0][0].ng_type == "성능불량") {
+          $("#yes_line_1").css({
+            "font-weight": "bold",
+            "text-decoration": "underline",
+          });
+        } else {
+          $("#no_line_1").css({
+            "font-weight": "bold",
+            "text-decoration": "underline",
+          });
+        }
+
+        if (list_336.length > 0 && list_336[0][0].ng_type == "외관불량") {
+          $("#yes_line_2").css({
+            "font-weight": "bold",
+            "text-decoration": "underline",
+          });
+        } else {
+          $("#no_line_2").css({
+            "font-weight": "bold",
+            "text-decoration": "underline",
+          });
+        }
+
+        if (
+          list_336[0][0].ng_type == "성능불량" ||
+          list_336[0][0].ng_type == "외관불량"
+        ) {
+          $(".336-print").show();
+
+          let release_ng_no = list_336[0][0].release_ng_no;
+          let print_date = list_336[0][0].print_date;
+          let ng_area = list_336[0][0].ng_area;
+          let invoice_no = list_336[0][0].invoice_no;
+          let store_date = list_336[0][0].store_date;
+          let carcass_cd = list_336[0][0].carcass_cd;
+          let machine_no = list_336[0][0].machine_no;
+          let sales_cd_NG = list_336[0][0].sales_cd_NG;
+          let built_no = list_336[0][0].built_no;
+          let ng_manager = list_336[0][0].ng_manager;
+          let engine_no = list_336[0][0].engine_no;
+          let ng_type = list_336[0][0].ng_type;
+          let ng_reason = list_336[0][0].ng_reason;
+          let handle_reason = list_336[0][0].handle_reason;
+          let handle_manager = list_336[0][0].handle_manager;
+          let handle_date = list_336[0][0].handle_date;
+
+          let ng_files_id = list_336[0][0].ng_files;
+          if (ng_files_id != null || ng_files_id != " ") {
+            ng_files_id = ng_files_id
+              .replace(/SIMBIZPER/g, "%")
+              .replace(/SIMBIZSQT/g, "'")
+              .replace(/SIMBIZDQT/g, '"')
+              .replace(/SIMBIZCOMMA/g, ",")
+              .replace(/SIMBIZEQ/g, "=");
+          }
+
+          let handle_files_id = list_336[0][0].handle_files;
+          if (handle_files_id != null || handle_files_id != " ") {
+            handle_files_id = handle_files_id
+              .replace(/SIMBIZPER/g, "%")
+              .replace(/SIMBIZSQT/g, "'")
+              .replace(/SIMBIZDQT/g, '"')
+              .replace(/SIMBIZCOMMA/g, ",")
+              .replace(/SIMBIZEQ/g, "=");
+          }
+
+          // console.log( ng_files_id);
+          // console.log(handle_files_id);
+          $("#release_ng_no").text("일련번호 : " + release_ng_no);
+          $("#print_date").text("출력일 : " + print_date);
+          $("#ng_area").text(ng_area);
+          $("#invoice_no").text(invoice_no);
+          $("#print_date_1").text(print_date);
+          $("#store_date").text(store_date);
+          $("#carcass_cd").text(carcass_cd);
+          $("#machine_no").text(machine_no);
+          $("#sales_cd_NG").text(sales_cd_NG);
+          $("#built_no").text(built_no);
+          $("#ng_manager").text(ng_manager);
+          $("#engine_no").text(engine_no);
+          $("#ng_type").text(ng_type);
+          $("#ng_reason").text(ng_reason);
+          $("#handle_reason").text(handle_reason);
+          $("#handle_manager").text(handle_manager);
+          $("#handle_date").text(handle_date);
+          $("#ng_files").text(ng_files_id);
+          $("#handle_files").text(handle_files_id);
+
+          $("#result").hide();
+          let ng_files = $("#ng_files")[0].innerText;
+          // console.log(ng_files)
+
+          let pattern = /newfilename%22%3A%22.{32}\.jpg/g;
+
+          if (ng_files != null || ng_files != " ") {
+            let matches = ng_files.match(pattern);
+
+            let resultArray = matches.map((match) =>
+              match.replace("newfilename%22%3A%22", "")
+            );
+
+            if (resultArray.length != 0) {
+              for (let i = 0; i < resultArray.length; i++) {
+                let img = "#img" + i;
+                let text =
+                  `<img style="width: 100%; height: 100%;" src="http://yandev.simbizkorea.com/file/` +
+                  resultArray[i] +
+                  `" />`;
+                $(img).html(text);
+              }
+            }
+          }
+
+          let handle_files = $("#handle_files")[0].innerText;
+          console.log(handle_files);
+          if (!handle_files) {
+            console.error(
+              "handle_files is null or empty. Taking appropriate actions."
+            );
+          } else {
+            let matches_handle = handle_files.match(pattern);
+            let resultHandle = matches_handle.map((handle) =>
+              handle.replace("newfilename%22%3A%22", "")
+            );
+            if (resultHandle.length != 0) {
+              for (let j = 0; j < resultHandle.length; j++) {
+                let img1 = "#himg" + j;
+                let text1 =
+                  `<img style="width: 100%; height: 100%;" src="http://yandev.simbizkorea.com/file/` +
+                  resultHandle[j] +
+                  `" />`;
+                $(img1).html(text1);
+              }
+            }
+          }
+        }
+      }
 
       let prod_type1 = "";
       let sale_code = "";
@@ -208,5 +357,5 @@ for (let i = 1; i < 11 - count_tr_selector.length; i++) {
 }
 // const test = $("#data_tbl tbody tr:last-child")
 const test = $("#last_tr");
-console.log(count_tr_selector.length);
+// console.log(count_tr_selector.length)
 $("#last_tr").before(string);

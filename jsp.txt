@@ -541,23 +541,59 @@
                   String dataSql1;
                   String dataSql2;
                   List <List> list_total = new ArrayList<>();
-                  List <List> list_plate_no = new ArrayList<>();
+                  List <List> list_336 = new ArrayList<>();
                   for(int i = 0 ; i < data.size() ; i ++){
                      List<Map<String, Object>> item_data = new ArrayList<>();
-                     List<Map<String, Object>> plate_no_data = new ArrayList<>();
+                     List<Map<String, Object>> print_336_data = new ArrayList<>();
                 //  Map<String, Object> plate_no_data = new HashMap<>();
    
                       String item_cd = data.get(i).get("item_cd").toString();
-                      String serial_id = data.get(i).get("serial_id").toString();
-                      if(serial_id==null)serial_id="0";
+                      String prod_type1 = data.get(i).get("prod_type1").toString();
+                      String carcass_cd = data.get(i).get("carcass_cd").toString();
+                      String sales_cd = data.get(i).get("sales_cd").toString();
+                      //if(serial_id==null)serial_id="0";
                       dataSql1 = "select a.*,b.item_name,b.spec,b.unit,b.sales_cd,b.prod_type1, ifnull(b.sales_cd, b.item_no) option_sales_cd from tb_ma_item_sale_option a JOIN vw_ma_item b on a.option_item_cd  = b.item_cd where a.option_item_type = 'PROD' and a.prod_option_type = '부대품' and a.item_cd = '"+item_cd+"'";
                       item_data = selectAllQuery(conn, dataSql1);
                       list_total.add(item_data);
                       
-                      dataSql2 = "select plate_no3 from tb_manufacture_work where prod_item_cd = '"+item_cd+"' and serial_id = '"+serial_id+"'" ;
-                      plate_no_data = selectAllQuery(conn, dataSql2);
+                      dataSql2 = "select item.prod_type1 ";
+                      dataSql2 += "  , item.carcass_cd ";
+                      dataSql2 += "  , item.sales_cd ";
+                      dataSql2 += "  , serial.invoice_no ";
+                      dataSql2 += "  , store.store_date ";
+                      dataSql2 += "  , serial.machine_no ";
+                      dataSql2 += "  , serial.built_no ";
+                      dataSql2 += "  , serial.engine_no ";
+                      dataSql2 += "  , ng.status ";
+                      dataSql2 += "  , ng.ng_area ";
+                      dataSql2 += "  , ng.ng_type ";
+                      dataSql2 += "  , ng.ng_reason ";
+                      dataSql2 += "  , ifnull(ng.ng_files,'') ng_files ";
+                      dataSql2 += "  , usm.USERNAME as ng_manager ";
+                      dataSql2 += "  , ng.ng_date ";
+                      dataSql2 += "  , ng.handle_reason ";
+                      dataSql2 += "  , ifnull(ng.handle_files,'') handle_files ";
+                      dataSql2 += "  , us.USERNAME as handle_manager ";
+                      dataSql2 += "  , ng.handle_date ";
+                      dataSql2 += "  , ng.createuser ";
+                      dataSql2 += "  , ng.createdate ";
+                      dataSql2 += "  , ng.updateuser ";
+                      dataSql2 += "  , ng.updatedate ";
+                      dataSql2 += "  , ng.release_ng_no ";
+                      dataSql2 += "  , '' pdf_file ";
+                      dataSql2 += "  ,date(now()) as print_date ";
+                      dataSql2 += "  ,item.cust_cd ";
+                      dataSql2 += "           from tb_release_ng ng ";
+                      dataSql2 += "           left join vw_ma_item item on item.item_cd = ng.item_cd ";
+                      dataSql2 += "           left join tb_product_serial serial on serial.serial_id = ng.serial_id ";
+                      dataSql2 += "           left join tb_product_store store on store.item_cd = ng.item_cd and store.serial_id = ng.serial_id ";
+                      dataSql2 += "           left join vw_cm_usermaster usm on ng.ng_manager = usm.UID ";
+                      dataSql2 += "           left join vw_cm_usermaster us on ng.handle_manager = us.UID ";
+                      dataSql2 += "           where 1 = 1 and item.prod_type1 = '"+prod_type1+"' and item.carcass_cd  = '"+carcass_cd+"'";
+                      dataSql2 += "           and item.sales_cd  = '"+sales_cd+"'";
+                      print_336_data = selectAllQuery(conn, dataSql2);
                       
-                      list_plate_no.add(plate_no_data);
+                      list_336.add(print_336_data);
                   
                   }
                  
@@ -571,7 +607,7 @@
                 response_data.put("res", data);
                 response_data.put("driver", driver_data);
                 response_data.put("item", list_total);
-                response_data.put("plate_no", list_plate_no);
+                response_data.put("list_336", list_336);
                 response_data.put("sql", dataSql);
                 String jsonString = new Gson().toJson(response_data);
                 out.write(jsonString);

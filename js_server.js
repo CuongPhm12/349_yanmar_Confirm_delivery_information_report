@@ -32,10 +32,10 @@ $("#cust_btn4").on("click", function (event) {
   const selectedRow = grid1.getCheckedRows();
 
   if (selectedRow.length === 1) {
-    if (selectedRow[itmobj1["load_finish_date"]] == null) {
-      msg("아직 상차확정이 완료되지 않았습니다.");
-      return;
-    }
+    // if (selectedRow[itmobj1["load_finish_date"]] == null) {
+    //   msg("아직 상차확정이 완료되지 않았습니다.");
+    //   return;
+    // }
     $("#print_btn").trigger("click");
   } else if (selectedRow.length >= 2) {
     const releaseNo = selectedRow[0][itmobj1["release_no"]];
@@ -45,10 +45,10 @@ $("#cust_btn4").on("click", function (event) {
         msg("두 번의 운송을 선택할 수 없습니다.");
         return;
       }
-      if (selectedRow[itmobj1["load_finish_date"]] == null) {
-        msg("아직 상차확정이 완료되지 않았습니다.");
-        return;
-      }
+      //   if (selectedRow[itmobj1[i]["load_finish_date"]] == null) {
+      //     msg("아직 상차확정이 완료되지 않았습니다.");
+      //     return;
+      //   }
     }
 
     $("#print_btn").trigger("click");
