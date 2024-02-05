@@ -33,7 +33,8 @@ function getData() {
     data: data_Send,
     async: false,
     success: function (response, status, request) {
-      const { res, sql, driver, item, list_336 } = response;
+      const { res, sql, driver, item, list_336, list_last_print_page } =
+        response;
       console.log(response);
       if (!list_336[0][0] || !list_336[0][0].ng_type) {
         $("#no_line_1").css({
@@ -151,7 +152,7 @@ function getData() {
               for (let i = 0; i < resultArray.length; i++) {
                 let img = "#img" + i;
                 let text =
-                  `<img style="width: 100%; height: 100%;" src="http://yandev.simbizkorea.com/file/` +
+                  `<img style="width: 100%; height: 100%;" src="http://yanmar.simbizkorea.com/file/` +
                   resultArray[i] +
                   `" />`;
                 $(img).html(text);
@@ -174,7 +175,7 @@ function getData() {
               for (let j = 0; j < resultHandle.length; j++) {
                 let img1 = "#himg" + j;
                 let text1 =
-                  `<img style="width: 100%; height: 100%;" src="http://yandev.simbizkorea.com/file/` +
+                  `<img style="width: 100%; height: 100%;" src="http://yanmar.simbizkorea.com/file/` +
                   resultHandle[j] +
                   `" />`;
                 $(img1).html(text1);
@@ -186,10 +187,7 @@ function getData() {
 
       let prod_type1 = "";
       let sale_code = "";
-      // for (let t = 0; t < res.length; t++) {
-      // let item_res = res[t];
-      // let sales_cd = item_res.sales_cd || "";
-      // let prod_type1 = item_res.prod_type1 || "";
+
       for (let j = 0; j < item.length; j++) {
         let is_completee_detail = "";
         let item_data = item[j];
@@ -201,10 +199,6 @@ function getData() {
 
           for (let o = 0; o < item_data.length; o++) {
             let item_name = item_data[o].option_sales_cd || "";
-            //   prod_type1 = item_data[o].prod_type1|| "";
-            //   sale_code = item_data[o].sales_cd|| "";
-            //   let spec =  item_data[o].spec || "";
-            //   let unit =  item_data[o].unit || "";
             let qty = item_data[o].qty || "";
             //   console.log( prod_type1 );
             let newRowDetail = `
@@ -220,13 +214,8 @@ function getData() {
             is_completee_detail += newRowDetail;
             item_name_detail = item_name;
           }
-          //   $("#item_name" + j).text("제품명 :" + prod_type1)
-          //   $("#sale_code" + j).text("형식명 :" + sales_cd)
-          //   $("#driver_name_id_sub" + j).text("운전자명: " + driver_name)
-          //   $("#car_no_id_sub" + j).text(car_no)
-          $("#detail" + j).after(is_completee_detail);
 
-          // }
+          $("#detail" + j).after(is_completee_detail);
         }
       }
       for (let t = 0; t < res.length; t++) {
@@ -243,6 +232,7 @@ function getData() {
 
       let total = 0;
       var is_completee = "";
+      var is_completee_last_page = "";
       let delv_comp_name = driver.cust_name || "";
       let delv_comp_phone = driver.tel_no || "";
       let delv_comp_addr = driver.address || "";
@@ -279,8 +269,31 @@ function getData() {
 
         is_completee += newRow;
       }
+      console.log(list_last_print_page[0].length);
+      for (let k = 0; k < list_last_print_page[0].length; k++) {
+        let item = list_last_print_page[0][k];
+
+        let check_title = item.check_title || "";
+        let check_item = item.check_item || "";
+        let content = item.content || "";
+
+        let newRow = `
+              <tr class="rowsrepeat"  style="height: 40px;">
+                    <td style="width: 57.775px; height: 35px; text-align: center;">${check_title}</td>
+                    <td style="width: 198.288px; height: 35px;">${check_item}</td>
+                    <td style="width: 505.95px; height: 35px;">${content}</td>
+                    <td style="width: 122.162px; height: 35px; text-align: center;">합, 부</td>
+                    <td style="width: 101.625px; height: 35px;"> </td>
+                </tr>
+                `;
+
+        is_completee_last_page += newRow;
+      }
+
+      //   console.log(is_completee_last_page)
 
       $("#tr_lv2").after(is_completee);
+      $("#tr_lv2_last_page").after(is_completee_last_page);
 
       $("#release_no_id").text(releaseNo);
       $("#date_ko_render").text(release_order_date_ko);

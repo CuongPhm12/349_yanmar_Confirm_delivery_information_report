@@ -540,18 +540,21 @@
                  
                   String dataSql1;
                   String dataSql2;
+                  String dataSql3;
                   List <List> list_total = new ArrayList<>();
                   List <List> list_336 = new ArrayList<>();
+                  List <List> list_last_print_page = new ArrayList<>();
                   for(int i = 0 ; i < data.size() ; i ++){
                      List<Map<String, Object>> item_data = new ArrayList<>();
                      List<Map<String, Object>> print_336_data = new ArrayList<>();
-                //  Map<String, Object> plate_no_data = new HashMap<>();
+                     List<Map<String, Object>> last_print_page_data = new ArrayList<>();
+
    
                       String item_cd = data.get(i).get("item_cd").toString();
                       String prod_type1 = data.get(i).get("prod_type1").toString();
-                      String carcass_cd = data.get(i).get("carcass_cd").toString();
+                      String serial_id = data.get(i).get("serial_id").toString();
                       String sales_cd = data.get(i).get("sales_cd").toString();
-                      //if(serial_id==null)serial_id="0";
+  
                       dataSql1 = "select a.*,b.item_name,b.spec,b.unit,b.sales_cd,b.prod_type1, ifnull(b.sales_cd, b.item_no) option_sales_cd from tb_ma_item_sale_option a JOIN vw_ma_item b on a.option_item_cd  = b.item_cd where a.option_item_type = 'PROD' and a.prod_option_type = '부대품' and a.item_cd = '"+item_cd+"'";
                       item_data = selectAllQuery(conn, dataSql1);
                       list_total.add(item_data);
@@ -589,12 +592,32 @@
                       dataSql2 += "           left join tb_product_store store on store.item_cd = ng.item_cd and store.serial_id = ng.serial_id ";
                       dataSql2 += "           left join vw_cm_usermaster usm on ng.ng_manager = usm.UID ";
                       dataSql2 += "           left join vw_cm_usermaster us on ng.handle_manager = us.UID ";
-                      dataSql2 += "           where 1 = 1 and item.prod_type1 = '"+prod_type1+"' and item.carcass_cd  = '"+carcass_cd+"'";
-                      dataSql2 += "           and item.sales_cd  = '"+sales_cd+"'";
+                      dataSql2 += "           where 1 = 1 and ng.item_cd = '"+item_cd+"' ";
+                      dataSql2 += "           and ng.serial_id  = '"+serial_id+"'";
                       print_336_data = selectAllQuery(conn, dataSql2);
                       
                       list_336.add(print_336_data);
-                  
+                      
+                      dataSql3 ="";
+                      dataSql3 +="select a.item_cd, ";
+                      dataSql3 +="      a.check_type, ";
+                      dataSql3 +=" a.sorder, ";
+                      dataSql3 +=" a.sort_no, ";
+                      dataSql3 +=" a.check_title, ";
+                      dataSql3 +=" a.check_item, ";
+                      dataSql3 +=" a.content, ";
+                      dataSql3 +=" a.remark, ";
+                      dataSql3 +=" a.createuser, ";
+                      dataSql3 +=" a.createdate, ";
+                      dataSql3 +=" a.updateuser, ";
+                      dataSql3 +=" a.updatedate ";
+                      dataSql3 +=" from tb_ma_item_check_list a ";
+                      dataSql3 +=" where a.item_cd = '"+item_cd+"' ";
+                      dataSql3 +=" and a.check_type = '하차검사' ";
+                      dataSql3 +=" order by a.sort_no asc ";
+                      
+                      last_print_page_data= selectAllQuery(conn, dataSql3);
+                      list_last_print_page.add(last_print_page_data);
                   }
                  
                   dataSql = "select cust_name, tel_no, address, ceo_name from tb_ma_cust where cust_cd = 'YNK00132'";
@@ -608,6 +631,7 @@
                 response_data.put("driver", driver_data);
                 response_data.put("item", list_total);
                 response_data.put("list_336", list_336);
+                response_data.put("list_last_print_page", list_last_print_page);
                 response_data.put("sql", dataSql);
                 String jsonString = new Gson().toJson(response_data);
                 out.write(jsonString);
