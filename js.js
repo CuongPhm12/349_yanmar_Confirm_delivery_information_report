@@ -475,7 +475,7 @@ function getData() {
             "(기대번호: " + machine_no_extra + ")"
           );
           $("#region_agency_last_page" + j).text(
-            "[경북 신군위 " + region + " " + agency_name + "]"
+            "[" + region + " " + agency_name + " 대리점 ]"
           );
         }
       }
@@ -532,6 +532,30 @@ function getData() {
       $("#end_agency_address_id").text(end_agency_address);
       $("#end_agency_address_id_2").text(end_agency_address);
       $("#end_agency_tel_no_id").text(end_agency_tel_no);
+
+      //adding blank row to full of 9 rows
+      for (let j = 0; j < item.length; j++) {
+        const count_tr_selector_423 = $("#row_add_423-" + j + " tbody tr");
+        console.log(count_tr_selector_423.length);
+        let string_423 = "";
+
+        for (let i = 1; i < 24 - count_tr_selector_423.length; i++) {
+          string_423 += `<tr style="height: 40px;">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>`;
+        }
+        // const test = $("#data_tbl tbody tr:last-child")
+        // const test = $("#last_tr");
+        // console.log(count_tr_selector.length)
+        // console.log(string_423)
+        $("#row_add_423-" + j + " tbody tr:last-child").after(string_423);
+        string_423 = "";
+      }
     },
     error: function (xmlHttpRequest, txtStatus, errorThrown) {
       console.log("erorr");
@@ -557,7 +581,7 @@ for (let i = 1; i < 11 - count_tr_selector.length; i++) {
     </tr>`;
 }
 // const test = $("#data_tbl tbody tr:last-child")
-const test = $("#last_tr");
+// const test = $("#last_tr");
 // console.log(count_tr_selector.length)
 $("#last_tr").before(string);
 
