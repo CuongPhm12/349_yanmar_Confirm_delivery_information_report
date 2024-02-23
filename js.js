@@ -353,7 +353,7 @@ function getData() {
           let item_name_detail = "";
 
           for (let o = 0; o < item_data.length; o++) {
-            let item_name = item_data[o].option_sales_cd || "";
+            let item_name = item_data[o].item_name || "";
             let qty = item_data[o].qty || "";
             //   console.log( prod_type1 );
             let newRowDetail = `
@@ -448,7 +448,7 @@ function getData() {
                                         <td style="width: 57.775px; height: 35px; text-align: center;">${check_title}</td>
                                         <td style="width: 198.288px; height: 35px;">${check_item}</td>
                                         <td style="width: 505.95px; height: 35px;">${content}</td>
-                                        <td style="width: 122.162px; height: 35px; text-align: center;">합, 부</td>
+                                        <td style="width: 122.162px; height: 35px; text-align: center;">합 ,  부</td>
                                         <td style="width: 101.625px; height: 35px;"> </td>
                                     </tr>
                                     `;
@@ -539,7 +539,7 @@ function getData() {
         console.log(count_tr_selector_423.length);
         let string_423 = "";
 
-        for (let i = 1; i < 24 - count_tr_selector_423.length; i++) {
+        for (let i = 1; i < 22 - count_tr_selector_423.length; i++) {
           string_423 += `<tr style="height: 40px;">
             <td></td>
             <td></td>
@@ -568,7 +568,7 @@ const count_tr_selector = $("#data_tbl tbody tr");
 
 let string = "";
 
-for (let i = 1; i < 11 - count_tr_selector.length; i++) {
+for (let i = 1; i < 10 - count_tr_selector.length; i++) {
   string += `<tr class="rowsrepeat" style="height: 40px;text-align: center;">
     <td></td>
     <td></td>

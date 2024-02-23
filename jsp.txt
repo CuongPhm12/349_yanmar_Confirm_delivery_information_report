@@ -1,564 +1,658 @@
 <%@page import="java.util.*"%>
 <%@page import="java.sql.*"%>
 <%@page import="java.net.*"%>
-<%@page import="java.io.*"%>      
+<%@page import="java.io.*"%>
 <%@page import="java.text.SimpleDateFormat"%>
-<%@page import="java.text.*"%>
-<%@page import="java.math.*"%>
-<%@page import="java.util.*"%>
 <%@page import="java.util.Calendar"%>
-<%@page import="java.time.*"%>
-<%@page import="java.time.format.*"%>
-<%@page import="com.google.gson.Gson"%> 
-<%@page import="java.sql.DriverManager"%> 
+<%@page import="com.google.gson.Gson"%>
+<%@page import="java.sql.DriverManager"%>
 <%@page import="java.sql.SQLException"%>
 <%@page import="org.json.JSONArray"%>
 <%@page import="org.json.JSONObject"%>
-<%@page import="java.util.HashMap"%>
-<%@page import="java.util.List"%>
-<%@page import="java.util.Map"%>
-<%@page import="java.util.regex.*"%>
-
 <%@page import="org.slf4j.Logger"%>
 <%@page import="org.slf4j.LoggerFactory"%>
 
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%!
-    public java.sql.Connection conn = null;
-    public java.sql.PreparedStatement pstmt = null;
-    public ResultSet rs = null;
-    public Statement stmt = null;
+<%@ include file="/WEB-INF/views/ajax/M000000001.jsp" %>
+<%@ include file="/WEB-INF/views/ajax/M000000241.jsp" %>
+<%
+    Logger logger = LoggerFactory.getLogger(getClass());
 
-    public String MENUCODE = "";
-    
-    public String referer = "";         
-    public String userAgent = "";       
-    public String host = "";            
-    public String wlProxyClientIp = ""; 
-    public String proxyClientIp = "";    
-    public String xForwardedFor = "";   
-    
-    public String sqlCoumns = "";
-    public String sqlValues = "";
-    public String sqlDuplis = "";
-    public Logger logger = LoggerFactory.getLogger(getClass());   
-    
-    public String msg(javax.servlet.http.HttpSession pSession, java.sql.Connection pConn, String code) {
-        
-        HashMap<String, String> param = new HashMap<>();          
-        param = (HashMap<String, String>) pSession.getAttribute("login");
-        String simbizlang = param.get("simbizlang");
-        if("".equals(simbizlang)) {
-            simbizlang = "KR";
-        }
-        
-        String msg = getSOrder(pConn, "select ifnull(SIMBIZLANG, '') from simbiz.tb_cm_lang where LANGCODE = '" + code + "' and LANGTYPE = '" + simbizlang + "' ");
-        
-        return msg;
-    }
-    
-    public String msg(java.sql.Connection pConn, String simbizlang, String code) {
-        if(checkEmpty(simbizlang)) {
-            simbizlang = "KR";
-        }
-        
-        String msg = getSOrder(pConn, "select ifnull(SIMBIZLANG, '') from simbiz.tb_cm_lang where LANGCODE = '" + code + "' and LANGTYPE = '" + simbizlang + "' ");
-        
-        return msg;
-    }
-    
-    public String msg(String simbizlang, java.sql.Connection pConn, String code) {
-        if(checkEmpty(simbizlang)) {
-            simbizlang = "KR";
-        }
-        
-        String msg = getSOrder(pConn, "select ifnull(SIMBIZLANG, '') from simbiz.tb_cm_lang where LANGCODE = '" + code + "' and LANGTYPE = '" + simbizlang + "' ");
-        
-        return msg;
-    }
-    
-    public boolean checkEmpty(Object obj) {
-        String str = String.valueOf(obj);
-        if(obj == null || "".equals(str) || "0".equals(str) || "null".equals(str.toLowerCase()))
-            return true;
-        else
-            return false;
-    }
+    String header = (String)request.getParameter("header");
+    String detail = (String)request.getParameter("detail");
+    String sdetail = (String)request.getParameter("sdetail");
+    String type = (String)request.getParameter("type");
 
-    public String generateCode(java.sql.Connection pConn, String pCode) { 
-        String returnValue = null;
+    String driver = "org.mariadb.jdbc.Driver";
+    String url = "jdbc:mariadb://localhost:3306/simbizlocal?useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8";
+
+    String sLine = "";
+    String sText = "";
+    String user = "root";
+    String password = "tlaqlwm2174";
+
+    JSONObject jsonObj = new JSONObject();
+    String PassText = null;
+    String sql = "";
+    java.sql.Connection conn = null;
+    java.sql.PreparedStatement pstmt = null;
+    ResultSet rs = null;
+    Statement stmt = null;
+    
+    
+    String UID = (String)request.getParameter("UID");
+    
+    java.text.SimpleDateFormat dateFormat = new SimpleDateFormat ( "yyyy-MM-dd HH:mm:ss");
+    java.util.Date time = new java.util.Date();
+    String datetime = dateFormat.format(time);
+
+    try {
         try {
-            ResultSet rs = null;
-            Statement stmt = null;
-            stmt = pConn.createStatement();
-            String csql = "";
-            csql = "  select simbizlocal.GENERATE_CM_CODE('" + pCode + "') ";
-            rs = stmt.executeQuery(csql);
-            info("function/generateCode : " + csql);
-            while (rs.next()) {
-                int total_rows = rs.getMetaData().getColumnCount();
-                JSONObject obj = new JSONObject();
-                for (int z = 0; z < total_rows; z++) {
-                    obj.put(rs.getMetaData().getColumnLabel(z + 1), rs.getObject(z + 1));
-                    String column = "";
-                    String value = "";
-                    if ( rs.getMetaData().getColumnLabel(z + 1) != null ) {
-                        column = rs.getMetaData().getColumnLabel(z + 1).toString();
-                    }
-                    if ( rs.getObject(z + 1) != null ) {
-                        value = rs.getObject(z + 1).toString();
-                    }
-                    if ( value != null && !value.equals("") ) {
-                        returnValue = value;
+            Class.forName(driver);
+            conn = DriverManager.getConnection(url, user, password);
+            conn.setAutoCommit(false);
+
+            if ( type.equals("insert") || type.equals("edit") ) {
+                Gson gson = new Gson();
+                if(header != null){
+                    List<Map> list = gson.fromJson(header, List.class);
+                    String release_no = "";
+                    for(int i = 0 ; i < list.size() ; i ++){
+                        if (i == 0) {
+                            release_no = list.get(i).get("release_no").toString();
+                        } else {
+                            if (list.get(i).get("release_no").toString().equals(release_no)) {
+                                continue;
+                            } else {
+                                release_no = list.get(i).get("release_no").toString();
+                            }
+                        }
+                        //clear sql statement
+                        sqlCoumns = "";
+                        sqlValues = "";
+                        sqlDuplis = "";
+                        String handle_type = list.get(i).get("handle_type").toString();
+                        
+                        //check status 
+                        if (list.get(i).get("release_status").toString().equals("STATUS99")) {
+                            throw new Exception("상차완료된 제품입니다!");
+                        }
+                        
+                        //check tb_release_ng
+                        if (!list.get(i).get("stock_id").toString().equals("") && !list.get(i).get("serial_id").toString().equals("") && !list.get(i).get("item_cd").toString().equals("")) {
+                            String checkNg = getSOrder(conn, "select count(*) as cnt from tb_release_ng where ifnull(status,'출하중지') = '출하중지' and stock_id = " + list.get(i).get("stock_id").toString() + " and serial_id = " + list.get(i).get("serial_id").toString() + " and item_cd = '" + list.get(i).get("item_cd").toString() + "'");
+                            if (!checkNg.equals("0")) {
+                                throw new Exception("출고 불가능한 제품이 존재합니다!");
+                            }
+                        }
+                        
+                        if (handle_type.equals("wh")) {
+                            Map<String, String> row = getRow(conn, "simbizlocal", "tb_release_wh", list.get(i));
+                            
+                            Iterator<String> keys = row.keySet().iterator();
+                            while(keys.hasNext()){
+                                String key = keys.next();
+                                if ( row.get(key) != null) {                        
+                                    String value = row.get(key);
+                                    // 기본키 제외 duplicate sql 만들기
+                                    if (!key.equals("release_no") && !key.equals("createuser") && !key.equals("createdate")) {
+                                        if (!sqlDuplis.equals("")) { sqlDuplis += ", "; }
+                                        sqlDuplis += (key + "=" + value);
+                                    }
+                                }
+                            }
+                            sql = " update tb_release_wh set " + sqlDuplis + " where release_no = " + row.get("release_no");
+                            logger.info("update tb_release_wh");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory("update", sql);
+                            
+                            if (!row.get("load_type").equals("NULL") || !row.get("driver_name").equals("NULL") || !row.get("driver_tel_no").equals("NULL") || !row.get("car_no").equals("NULL")) {
+                                sql =  " update tb_release_order_wh a join tb_release_wh_detail b on b.release_order_no = a.release_order_no set a.release_order_status = '완료' where b.release_no = " + row.get("release_no");
+                                logger.info("update tb_release_order_wh");
+                                logger.info(sql);
+                                pstmt = conn.prepareStatement(sql);
+                                pstmt.executeUpdate();
+                                addHistory(sql);
+                                
+                                /* 2024.01.29 by jplee : 상차전검사에서 UPDATE하도록 변경
+                                sql =  " update tb_agency_order a join tb_release_wh_detail b on b.agency_order_no = a.agency_order_no set a.agency_order_status = '출고준비완료' where b.release_no = " + row.get("release_no") + " and a.agency_order_status = '출하의뢰'";
+                                logger.info("update tb_agency_order");
+                                logger.info(sql);
+                                pstmt = conn.prepareStatement(sql);
+                                pstmt.executeUpdate();
+                                addHistory(sql);
+                                
+                                sql = "update tb_stock set release_order_date = ifnull(release_order_date, date_format(now(), '%Y-%m-%d')) where stock_id = " + list.get(i).get("stock_id");
+                                pstmt = conn.prepareStatement(sql);
+                                pstmt.executeUpdate();
+                                */
+                            }
+                        }
+                        if (handle_type.equals("storage")) {
+                            Map<String, String> row = getRow(conn, "simbizlocal", "tb_release_storage", list.get(i));
+                            
+                            Iterator<String> keys = row.keySet().iterator();
+                            while(keys.hasNext()){
+                                String key = keys.next();
+                                if ( row.get(key) != null) {                        
+                                    String value = row.get(key);
+                                    // 기본키 제외 duplicate sql 만들기
+                                    if (!key.equals("release_no") && !key.equals("createuser") && !key.equals("createdate")) {
+                                        if (!sqlDuplis.equals("")) { sqlDuplis += ", "; }
+                                        sqlDuplis += (key + "=" + value);
+                                    }
+                                }
+                            }
+                            sql = " update tb_release_storage set " + sqlDuplis + " where release_no = " + row.get("release_no");
+                            logger.info("update tb_release_storage");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory("update", sql);
+                            
+                            if (!row.get("load_type").equals("NULL") || !row.get("driver_name").equals("NULL") || !row.get("driver_tel_no").equals("NULL") || !row.get("car_no").equals("NULL")) {
+                                sql =  " update tb_release_order_storage a join tb_release_wh_detail b on b.release_order_no = a.release_order_no set a.release_order_status = '완료' where b.release_no = " + row.get("release_no");
+                                logger.info("update tb_release_order_storage");
+                                logger.info(sql);
+                                pstmt = conn.prepareStatement(sql);
+                                pstmt.executeUpdate();
+                                addHistory(sql);
+                                
+                                sql = "update tb_stock set release_order_date = ifnull(release_order_date, date_format(now(), '%Y-%m-%d')) where stock_id = " + list.get(i).get("stock_id");
+                                pstmt = conn.prepareStatement(sql);
+                                pstmt.executeUpdate();
+                            }
+                        }
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
                     }
                 }
+                PassText = "저장 되었습니다.";
+                jsonObj.put("result", PassText);
+                PassText = jsonObj.toString();
+                out.write(PassText);
+                out.flush();
+                conn.commit();
+                logger.info("!!!!COMMIT DONE!!!!");
             }
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-            returnValue = null;
-        }
-        return returnValue; 
-    }
-    
-    public Map<String, String> getRow(java.sql.Connection pConn, String TABLE_SCHEMA, String TABLE_NAME, Map<String, Object> map) { 
-        Map<String, String> returnMap = new HashMap<>();
-        try {
-            sqlCoumns = "";
-            sqlValues = "";
-            sqlDuplis = "";
-            ResultSet rs = null;
-            Statement stmt = null;
-            stmt = pConn.createStatement();
-            String csql = "";
-            csql = "  SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA='" + TABLE_SCHEMA + "' and TABLE_NAME='" + TABLE_NAME + "';";
-            rs = stmt.executeQuery(csql);
-            info("function/getRow : " + csql);
-            while (rs.next()) {
-                int total_rows = rs.getMetaData().getColumnCount();
-                JSONObject obj = new JSONObject();
-                String key = "";
-                for (int z = 0; z < total_rows; z++) {
-                    obj.put(rs.getMetaData().getColumnLabel(z + 1), rs.getObject(z + 1));
-                    String column = "";
-                    String value = "";
-                    if ( rs.getMetaData().getColumnLabel(z + 1) != null ) {
-                        column = rs.getMetaData().getColumnLabel(z + 1).toString();
-                    }
-                    if ( rs.getObject(z + 1) != null ) {
-                        value = rs.getObject(z + 1).toString();
-                    }
-                    if ( value != null && !value.equals("") ) {
-                        if (column.equals("COLUMN_NAME")) {
-                            key = value;
-                        } else {
-                            if (map.get(key) == null || map.get(key).toString().equals("")) {
-                                returnMap.put(key, "NULL");
-                            } else if (value.contains("double") || value.contains("int")) {
-                                String columnValue = map.get(key).toString().trim().replaceAll(" ", "").replaceAll(" ", "").replaceAll("SIMBIZCOMMA", "").replaceAll(",", "");
-                                if("-".equals(columnValue)) {
-                                    columnValue = "0";
-                                }
-                                if("NaN".equals(columnValue) || "Infinity".equals(columnValue)) {
-                                    columnValue = "NULL";
-                                }
-                                else {
-                                    /*
-                                    Pattern pattern = Pattern.compile("-?\\d+\\.?\\d*");
-                                    Matcher matcher = pattern.matcher(columnValue);
-                                    
-                                    StringBuilder result = new StringBuilder();
-                                    
-                                    while (matcher.find()) {
-                                        result.append(matcher.group());
-                                    }
-                                    
-                                    columnValue = result.toString();
-                                    
-                                    if(checkEmpty(columnValue)) {
-                                        columnValue = "NULL";
-                                    }
-                                    */
-                                    
-                                }
-                                
-                                returnMap.put(key, columnValue);
-                            } else {
-                                String columnValue = map.get(key).toString();
-                                columnValue = columnValue.replaceAll("%", "SIMBIZPER");
-                                columnValue = columnValue.replaceAll("'", "SIMBIZSQT");
-                                columnValue = columnValue.replaceAll("\"", "SIMBIZDQT");
-                                columnValue = columnValue.replaceAll(",", "SIMBIZCOMMA");
-                                columnValue = columnValue.replaceAll("=", "SIMBIZEQ");
-                                returnMap.put(key, "'" + columnValue.trim() + "'");
+
+            if ( type.equals("delete") ) {}
+            
+            if ( type.equals("cust_btn1") ) {
+                Gson gson = new Gson();
+                if(header != null){
+                    List<Map> list = gson.fromJson(header, List.class);
+                    for(int i = 0 ; i < list.size() ; i ++){
+                        String handle_type = list.get(i).get("handle_type").toString();
+                            
+                        //check tb_release_ng
+                        if (!list.get(i).get("stock_id").toString().equals("") && !list.get(i).get("serial_id").toString().equals("") && !list.get(i).get("item_cd").toString().equals("")) {
+                            String checkNg = getSOrder(conn, "select count(*) as cnt from tb_release_ng where ifnull(status,'출하중지') = '출하중지' and stock_id = " + list.get(i).get("stock_id").toString() + " and serial_id = " + list.get(i).get("serial_id").toString() + " and item_cd = '" + list.get(i).get("item_cd").toString() + "'");
+                            if (!checkNg.equals("0")) {
+                                throw new Exception("출고 불가능한 제품이 존재합니다!");
                             }
+                        }
+                        
+                        if (handle_type.equals("wh")) {
+                            Map<String, String> row = getRow(conn, "simbizlocal", "tb_release_wh", list.get(i));
+                            
+                            sql = " update tb_release_wh set release_status = 'STATUS99', load_finish_yn = 'Y', load_finish_date = '" + datetime + "' where release_no = " + row.get("release_no");
+                            logger.info("update tb_release_wh");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory("update", sql);
+                            
+                            sql =  " update tb_agency_order set agency_order_status = '상차완료(출발)' where agency_order_no = '" + list.get(i).get("agency_order_no").toString() + "'";
+                            logger.info("update tb_agency_order");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory(sql);
+                        }
+                        if (handle_type.equals("storage")) {
+                            Map<String, String> row = getRow(conn, "simbizlocal", "tb_release_storage", list.get(i));
+                            
+                            sql = " update tb_release_storage set release_status = 'STATUS99', load_finish_yn = 'Y', load_finish_date = '" + datetime + "' where release_no = " + row.get("release_no");
+                            logger.info("update tb_release_storage");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory("update", sql);
                         }
                     }
                 }
+                
+                PassText = "저장 되었습니다.";
+                jsonObj.put("result", PassText);
+                PassText = jsonObj.toString();
+                out.write(PassText);
+                out.flush();
+                conn.commit();
+                logger.info("!!!!COMMIT DONE!!!!");
             }
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-        }
-        return returnMap; 
-    }
-    
-    public String getSOrder(java.sql.Connection pConn, String sql) { 
-        String returnValue = "0";
-        try {
-            ResultSet rs = null;
-            Statement stmt = null;
-            stmt = pConn.createStatement();
-            rs = stmt.executeQuery(sql);
-            info("function/getSOrder : " + sql);
-            while (rs.next()) {
-                int total_rows = rs.getMetaData().getColumnCount();
-                JSONObject obj = new JSONObject();
-                String key = "";
-                for (int z = 0; z < total_rows; z++) {
-                    obj.put(rs.getMetaData().getColumnLabel(z + 1), rs.getObject(z + 1));
-                    String column = "";
-                    String value = "";
-                    if ( rs.getMetaData().getColumnLabel(z + 1) != null ) {
-                        column = rs.getMetaData().getColumnLabel(z + 1).toString();
-                    }
-                    if ( rs.getObject(z + 1) != null ) {
-                        value = rs.getObject(z + 1).toString();
-                    }
-                    if ( value != null && !value.equals("") ) {
-                        returnValue = value;
+            if ( type.equals("cust_btn2") ) {}
+            if ( type.equals("cust_btn3") ) {
+                Gson gson = new Gson();
+                if(header != null){
+                    List<Map> list = gson.fromJson(header, List.class);
+                    for(int i = 0 ; i < list.size() ; i ++){
+                        //clear sql statement
+                        sqlCoumns = "";
+                        sqlValues = "";
+                        sqlDuplis = "";
+                        String handle_type = list.get(i).get("handle_type").toString();
+                        
+                        //check status 
+                        if (list.get(i).get("delv_fee") != null && !list.get(i).get("delv_fee").toString().equals("")) {
+                            throw new Exception("운송비가 등록되어 있어서 취소불가합니다.");
+                        }
+                        
+                        if (handle_type.equals("wh")) {
+                            //update release order
+                            sql =  " update tb_release_order_wh set release_order_status = '접수' where release_order_no = '" + list.get(i).get("release_order_no").toString() + "'";
+                            logger.info("delete tb_release_order_wh");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory(sql);
+                        
+                            //header
+                            Map<String, String> row = getRow(conn, "simbizlocal", "tb_release_wh", list.get(i));
+                            
+                            //update tb_agency_order
+                            sql =  " update tb_agency_order a join tb_release_wh_detail b on b.agency_order_no = a.agency_order_no set a.agency_order_status = '출하의뢰' where b.release_no = " + row.get("release_no");
+                            logger.info("update tb_agency_order");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory(sql);
+                                
+                            //update tb_release_wh 
+                            sql = " update tb_release_wh set load_type = null, driver_name = null, driver_tel_no = null, car_no = null,";
+                            sql += " release_status = 'STATUS01', load_finish_yn = null, load_finish_date = null,";
+                            sql += "updateuser = '" +  UID + "', updatedate = '" +  datetime + "' where release_no = " + row.get("release_no");
+                            logger.info("update tb_release_wh");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory(sql);
+                        }
+                        if (handle_type.equals("storage")) {
+                            //update release order
+                            sql =  " update tb_release_order_storage set release_order_status = '접수' where release_order_no = '" + list.get(i).get("release_order_no").toString() + "'";
+                            logger.info("delete tb_release_order_wh");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory(sql);
+                            
+                            //header
+                            Map<String, String> row = getRow(conn, "simbizlocal", "tb_release_storage", list.get(i));
+                                
+                            //update tb_release_wh 
+                            sql = " update tb_release_storage set load_type = null, driver_name = null, driver_tel_no = null, car_no = null,";
+                            sql += " release_status = 'STATUS01', load_finish_yn = null, load_finish_date = null,";
+                            sql += "updateuser = '" +  UID + "', updatedate = '" +  datetime + "' where release_no = " + row.get("release_no");
+                            logger.info("update tb_release_storage");
+                            logger.info(sql);
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            addHistory(sql);
+                        }
                     }
                 }
+                PassText = "취소 성공했습니다.";
+                jsonObj.put("result", PassText);
+                PassText = jsonObj.toString();
+                out.write(PassText);
+                out.flush();
+                conn.commit();
+                logger.info("!!!!COMMIT DONE!!!!");
             }
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-        }
-        return returnValue; 
-    }
-    
-    public String selectQuery(java.sql.Connection pConn, String sql) { 
-        String returnValue = null;
-        try {
-            ResultSet rs = null;
-            Statement stmt = null;
-            stmt = pConn.createStatement();
-            rs = stmt.executeQuery(sql);
-            info("function/selectQuery : " + sql);
-            while (rs.next()) {
-                int total_rows = rs.getMetaData().getColumnCount();
-                JSONObject obj = new JSONObject();
-                for (int z = 0; z < total_rows; z++) {
-                    obj.put(rs.getMetaData().getColumnLabel(z + 1), rs.getObject(z + 1));
-                    String column = "";
-                    String value = "";
-                    if ( rs.getMetaData().getColumnLabel(z + 1) != null ) {
-                        column = rs.getMetaData().getColumnLabel(z + 1).toString();
-                    }
-                    if ( rs.getObject(z + 1) != null ) {
-                        value = rs.getObject(z + 1).toString();
-                    }
-                    if ( value != null && !value.equals("") ) {
-                        returnValue = value;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-        }
-        return returnValue; 
-    }
-    
-    
-    public Map<String, Object> selectFirstQuery(java.sql.Connection pConn, String sql) {
-        //Map<String, Object> result = new HashMap<>();
-        Map<String, Object> result = null;
-        try {
-            ResultSet rs = null;
-            Statement stmt = null;
-            stmt = pConn.createStatement();
-            rs = stmt.executeQuery(sql);
-            info("function/selectQuery : " + sql);
-            ResultSetMetaData md = rs.getMetaData();
-            int columns = md.getColumnCount();
-            int check = 0;
-            while (rs.next()) {
-                if (check > 0) break;
-                Map<String, Object> row = new HashMap<>(columns);
-                for (int i = 1; i <= columns; ++i) {
-                    row.put(md.getColumnName(i), rs.getObject(i));
-                }
-                result = row;
-                check++;
-            }
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-        }
-        return result;
-    }
-    
-    
-    public List selectAllQuery(java.sql.Connection pConn, String sql) {
-        List<Map<String, Object>> list = new ArrayList<>();
-        try {
-            ResultSet rs = null;
-            Statement stmt = null;
-            stmt = pConn.createStatement();
-            rs = stmt.executeQuery(sql);
-            info("function/selectQuery : " + sql);
-            ResultSetMetaData md = rs.getMetaData();
-            int columns = md.getColumnCount();
-            while (rs.next()) {
-                Map<String, Object> row = new HashMap<>(columns);
-                for (int i = 1; i <= columns; ++i) {
-                    row.put(md.getColumnName(i), rs.getObject(i));
-                }
-                list.add(row);
-            }
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-        }
-        return list;
-    }
-    
-    public void addHistory(String item_type, String sql) {
-        try {
-        /*
-            String history =  " insert into simbizlocal.tb_ma_history (item_type, menu_cdoe, query, create_date, referer, user_agent, host, wl_proxy_client_ip, proxy_client_ip, x_forwarded_for) VALUES ('" 
-            + item_type.toUpperCase() + "', '" + MENUCODE + "', " + "'" +  URLEncoder.encode(sql) + "', now(), '" + referer + "', '" + userAgent + "', '"  + host + "', '"  + wlProxyClientIp + "', '"  + proxyClientIp + "', '"  + xForwardedFor + "')";
-            info(history);
-            pstmt = conn.prepareStatement(history);
-            pstmt.executeUpdate();
-        */
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-        }
-    }
-    
-    public void addHistory(String sql) {
-        try {
-        /*
-            String item_type = "";
-            String[] temp = sql.split(" ");
-            for (int i = 0; i < temp.length; i++) {
-                item_type = temp[i];
-                if (item_type.length() > 0) {
-                    break;
-                }
-            }
-            String history =  " insert into simbizlocal.tb_ma_history (item_type, menu_cdoe, query, create_date, referer, user_agent, host, wl_proxy_client_ip, proxy_client_ip, x_forwarded_for) VALUES ('" 
-            + item_type.toUpperCase() + "', '" + MENUCODE + "', " + "'" +  URLEncoder.encode(sql) + "', now(), '" + referer + "', '" + userAgent + "', '"  + host + "', '"  + wlProxyClientIp + "', '"  + proxyClientIp + "', '"  + xForwardedFor + "')";
-            info(history);
-            pstmt = conn.prepareStatement(history);
-            pstmt.executeUpdate();
-        */
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-        }
-    }
-    
-    public String getMenuCode(String referer) {
-        try {
-            URL url = new URL(referer);
-            String[] params = url.getQuery().split("&");
-            Map<String, String> map = new HashMap<String, String>();
-            for (String param : params)
-            {
-                String name = param.split("=")[0];
-                if (name != null && name.equals("MENUCODE")) {
-                    return param.split("=")[1];
-                }
-            }
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-        }
-        return "";
-    }
+            
+        if ( type.equals("get_data") ) {        
+                Gson gson = new Gson();
+                if(header != null){
+                    JSONObject searchValue = new JSONObject(header);
+                    String releaseNo = searchValue.getString("releaseNo").toString();
+                    String dataSql = "select * ";
+                    dataSql +=" from ( ";
+                    dataSql +=" (select ";
+                    dataSql +=" if (sorder is null, '---', start_wh_cd) as start_wh_cd ";
+                    dataSql +=" , if (sorder is null, '---', wh_nm) as wh_nm ";
+                    dataSql +=" , sorder ";
+                    dataSql +=" , if (sorder is null, '---', address_detail) as address_detail ";
+                    dataSql +=" , if (sorder is null, '---', load_type) as load_type";
+                    dataSql +=" , if (sorder is null, '---', driver_name) as driver_name";
+                    dataSql +=" , if (sorder is null, '---', driver_tel_no) as driver_tel_no";
+                    dataSql +=" , if (sorder is null, '---', car_no) as car_no";
+                    dataSql +=" , if (sorder is null, '---', load_finish_date) as load_finish_date";
+                    dataSql +=" , if (sorder is null, null, release_status) as release_status";
+                    dataSql +=" , if (sorder is null, null, release_status_name) as release_status_name";
+                    dataSql +=" , if (sorder is null, null, carcass_cd) as carcass_cd";
+                    dataSql +=" , if (sorder is null, null, sales_cd) as sales_cd";
+                    dataSql +=" , release_qty";
+                    dataSql +=" , if (sorder is null, null, option_1_name) as option_1_name";
+                    dataSql +=" , if (sorder is null, null, option_3_name) as option_3_name";
+                    dataSql +=" , if (sorder is null, null, agency_remark) as agency_remark";
+                    dataSql +=" , if (sorder is null, null, ynk_remark) as ynk_remark";
+                    dataSql +=" , if (sorder is null, null, machine_no) as machine_no";
+                    dataSql +=" , if (sorder is null, null, built_no) as built_no";
+                    dataSql +=" , if (sorder is null, null, engine_no) as engine_no";
+                    dataSql +=" , if (sorder is null, null, name_plate) as name_plate";
+                    dataSql +=" , if (sorder is null, null, approval_no) as approval_no";
+                    dataSql +=" , if (sorder is null, null, delv_method) as delv_method";
+                    dataSql +=" , if (sorder is null, null, delv_type) as delv_type";
+                    dataSql +=" , if (sorder is null, null, end_agency_cd) as end_agency_cd";
+                    dataSql +=" , if (sorder is null, null, end_wh_cd) as end_wh_cd";
+                    dataSql +=" , if (sorder is null, null, end_agency_tel_no) as end_agency_tel_no";
+                    dataSql +=" , if (sorder is null, null, end_fax_no) as end_fax_no";
+                    dataSql +=" , if (sorder is null, null, end_agency_address) as end_agency_address";
+                    dataSql +=" , if (sorder is null, null, delv_cust_cd) as delv_cust_cd";
+                    dataSql +=" , if (sorder is null, null, delv_cust_tel_no) as delv_cust_tel_no";
+                    dataSql +=" , delv_cust_remark";
+                    dataSql +=" , if (sorder is null, null, load_finish_yn) as load_finish_yn";
+                    dataSql +=" , if (sorder is null, null, stock_id) as stock_id";
+                    dataSql +=" , if (sorder is null, null, serial_id) as serial_id";
+                    dataSql +=" , item_cd";
+                    dataSql +=" , release_order_no";
+                    dataSql +=" , agency_order_no";
+                    dataSql +=" , release_no";
+                    dataSql +=" , delv_fee";
+					dataSql +=" , spec";
+					dataSql +=" , plate_no3 ";/*Cuong add for printing 2024-01-03*/
+					dataSql +=" , prod_type1 ";/*Cuong add for printing 2024-02-01*/
+                    dataSql +=" from (select a.start_wh_cd";
+                    dataSql +=" , wh.wh_nm";
+                    dataSql +=" , a.release_no";
+                    dataSql +=" , b.sorder";
+                    dataSql +=" , od.address_detail";
+                    dataSql +=" , a.load_type";
+                    dataSql +=" , a.driver_name";
+                    dataSql +=" , a.driver_tel_no";
+                    dataSql +=" , a.car_no";
+                    dataSql +=" , a.load_finish_date";
+                    dataSql +=" , a.release_status";
+                    dataSql +=" , rs.release_status_name";
+                    dataSql +=" , item.item_cd";
+                    dataSql +=" , item.carcass_cd";
+                    dataSql +=" , item.sales_cd";
+                    dataSql +=" , SUM(ifnull(b.release_qty,0)) as release_qty";
+                    dataSql +=" , ot1.option_name as option_1_name";
+                    dataSql +=" , ot3.option_name as option_3_name";
+                    dataSql +=" , od.agency_remark";
+                    dataSql +=" , od.ynk_remark";
+                    dataSql +=" , serial.machine_no";
+                    dataSql +=" , serial.built_no";
+                    dataSql +=" , serial.engine_no";
+                    dataSql +=" , serial.name_plate";
+                    dataSql +=" , serial.approval_no";
+                    dataSql +=" , a.delv_method";
+                    dataSql +=" , a.delv_type";
+                    dataSql +=" , a.end_agency_cd";
+                    dataSql +=" , a.end_wh_cd";
+                    dataSql +=" , a.end_agency_tel_no";
+                    dataSql +=" , a.end_fax_no";
+                    dataSql +=" , a.end_agency_address";
+                    dataSql +=" , a.delv_cust_cd";
+                    dataSql +=" , a.delv_cust_tel_no";
+                    dataSql +=" , a.delv_cust_remark";
+                    dataSql +=" , a.load_finish_yn";
+                    dataSql +=" , b.stock_id";
+                    dataSql +=" , ifnull(b.serial_id,'') serial_id";
+                    dataSql +=" , od.release_order_no";
+                    dataSql +=" , b.agency_order_no";
+                    dataSql +=" , a.delv_fee";
+					dataSql +=" , item.spec";
+					dataSql +=" , z.plate_no3 ";/*Cuong add for printing 2024-01-03*/
+					dataSql +=" , ifnull(item.prod_type1,'') prod_type1 ";/*Cuong add for printing 2024-02-01*/
+                    dataSql +=" from tb_release_wh a";
+                    dataSql +=" left join tb_release_wh_detail b on b.release_no = a.release_no";
+                    dataSql +=" left join tb_ma_agency ag on ag.agency_cd = a.end_agency_cd";
+                    dataSql +=" left join tb_release_order_wh od on od.release_order_no = b.release_order_no";
+                    dataSql +=" left join vw_ma_item item on item.item_cd = b.item_cd";
+                    dataSql +=" left join tb_product_serial serial on serial.serial_id = b.serial_id";
+                    dataSql +=" left join tb_ma_wh wh on wh.wh_cd = a.start_wh_cd and wh.use_yn = 'Y'";
+                    dataSql +=" left join vw_ma_code_release_status rs on rs.release_status = a.release_status ";
+                    dataSql +=" left join vw_ma_item_parts_option ot1 on ot1.option_item_cd = b.option_1 and ot1.item_cd = b.item_cd and ot1.parts_option_type = 'W' ";
+                    dataSql +=" left join vw_ma_item_parts_option ot3 on ot3.option_item_cd = b.option_3 and ot3.item_cd = b.item_cd and ot3.parts_option_type = 'H' ";
+                    dataSql +=" LEFT JOIN tb_manufacture_work z ON z.prod_item_cd  = b.item_cd AND z.serial_id  = b.serial_id ";/*Cuong add for printing 2024-01-03*/
+                    dataSql +=" group by a.release_no, b.sorder with rollup) a";
+                    dataSql +=" where a.sorder is not null)";
+                    dataSql +=" union all";
+                    dataSql +=" (select ";
+                    dataSql +=" if (sorder is null, '---', start_wh_cd) as start_wh_cd";
+                    dataSql +=" , if (sorder is null, '---', wh_nm) as wh_nm";
+                    dataSql +=" , sorder";
+                    dataSql +=" , if (sorder is null, '---', address_detail) as address_detail";
+                    dataSql +=" , if (sorder is null, '---', load_type) as load_type";
+                    dataSql +=" , if (sorder is null, '---', driver_name) as driver_name";
+                    dataSql +=" , if (sorder is null, '---', driver_tel_no) as driver_tel_no";
+                    dataSql +=" , if (sorder is null, '---', car_no) as car_no";
+                    dataSql +=" , if (sorder is null, '---', load_finish_date) as load_finish_date";
+                    dataSql +=" , if (sorder is null, null, release_status) as release_status";
+                    dataSql +=" , if (sorder is null, null, release_status_name) as release_status_name";
+                    dataSql +=" , if (sorder is null, null, carcass_cd) as carcass_cd";
+                    dataSql +=" , if (sorder is null, null, sales_cd) as sales_cd";
+                    dataSql +=" , release_qty";
+                    dataSql +=" , if (sorder is null, null, option_1_name) as option_1_name";
+                    dataSql +=" , if (sorder is null, null, option_3_name) as option_3_name";
+                    dataSql +=" , if (sorder is null, null, agency_remark) as agency_remark";
+                    dataSql +=" , if (sorder is null, null, ynk_remark) as ynk_remark";
+                    dataSql +=" , if (sorder is null, null, machine_no) as machine_no";
+                    dataSql +=" , if (sorder is null, null, built_no) as built_no";
+                    dataSql +=" , if (sorder is null, null, engine_no) as engine_no";
+                    dataSql +=" , if (sorder is null, null, name_plate) as name_plate";
+                    dataSql +=" , if (sorder is null, null, approval_no) as approval_no";
+                    dataSql +=" , if (sorder is null, null, delv_method) as delv_method";
+                    dataSql +=" , if (sorder is null, null, delv_type) as delv_type";
+                    dataSql +=" , if (sorder is null, null, end_agency_cd) as end_agency_cd";
+                    dataSql +=" , if (sorder is null, null, end_wh_cd) as end_wh_cd";
+                    dataSql +=" , if (sorder is null, null, end_agency_tel_no) as end_agency_tel_no";
+                    dataSql +=" , if (sorder is null, null, end_fax_no) as end_fax_no";
+                    dataSql +=" , if (sorder is null, null, end_agency_address) as end_agency_address";
+                    dataSql +=" , if (sorder is null, null, delv_cust_cd) as delv_cust_cd";
+                    dataSql +=" , if (sorder is null, null, delv_cust_tel_no) as delv_cust_tel_no";
+                    dataSql +=" , delv_cust_remark";
+                    dataSql +=" , if (sorder is null, null, load_finish_yn) as load_finish_yn";
+                    dataSql +=" , if (sorder is null, null, stock_id) as stock_id";
+                    dataSql +=" , if (sorder is null, null, serial_id) as serial_id";
+                    dataSql +=" , item_cd";
+                    dataSql +=" , release_order_no";
+                    dataSql +=" , agency_order_no";
+                    dataSql +=" , release_no as release_no_print";
+                    dataSql +=" , delv_fee";
+					dataSql +=" , spec";
+					dataSql +=" , plate_no3 ";/*Cuong add for printing 2024-01-03*/
+					dataSql +=" , prod_type1 ";/*Cuong add for printing 2024-02-01*/
+                    dataSql +=" from (select a.start_wh_cd";
+                    dataSql +=" , wh.wh_nm";
+                    dataSql +=" , a.release_no";
+                    dataSql +=" , b.sorder";
+                    dataSql +=" , '' address_detail";
+                    dataSql +=" , a.load_type";
+                    dataSql +=" , a.driver_name";
+                    dataSql +=" , a.driver_tel_no";
+                    dataSql +=" , a.car_no";
+                    dataSql +=" , a.load_finish_date";
+                    dataSql +=" , a.release_status";
+                    dataSql +=" , rs.release_status_name";
+                    dataSql +=" , item.item_cd";
+                    dataSql +=" , item.carcass_cd";
+                    dataSql +=" , item.sales_cd";
+                    dataSql +=" , SUM(ifnull(b.release_qty,0)) as release_qty";
+					dataSql +=" , ot1.option_name as option_1_name";
+                    dataSql +=" , ot3.option_name as option_3_name";
+                    dataSql +=" , '' agency_remark";
+                    dataSql +=" , '' ynk_remark";
+                    dataSql +=" , serial.machine_no";
+                    dataSql +=" , serial.built_no";
+                    dataSql +=" , serial.engine_no";
+                    dataSql +=" , serial.name_plate";
+                    dataSql +=" , serial.approval_no";
+                    dataSql +=" , a.delv_method";
+                    dataSql +=" , a.delv_type";
+                    dataSql +=" , a.end_agency_cd";
+                    dataSql +=" , a.end_wh_cd";
+                    dataSql +=" , a.end_agency_tel_no";
+                    dataSql +=" , a.end_fax_no";
+                    dataSql +=" , a.end_agency_address";
+                    dataSql +=" , a.delv_cust_cd";
+                    dataSql +=" , a.delv_cust_tel_no";
+                    dataSql +=" , a.delv_cust_remark";
+                    dataSql +=" , a.load_finish_yn";
+                    dataSql +=" , b.stock_id";
+                    dataSql +=" , ifnull(b.serial_id,'') serial_id ";
+                    dataSql +=" , od.release_order_no";
+                    dataSql +=" , '' as agency_order_no";
+                    dataSql +=" , a.delv_fee";
+					dataSql +=" , item.spec";
+					dataSql +=" , z.plate_no3 ";/*Cuong add for printing 2024-01-03*/
+					dataSql +=" , ifnull(item.prod_type1,'') prod_type1 ";/*Cuong add for printing 2024-02-01*/
+                    dataSql +=" from tb_release_storage a";
+                    dataSql +=" left join tb_release_storage_detail b on b.release_no = a.release_no";
+                    dataSql +=" left join tb_ma_agency ag on ag.agency_cd = a.end_agency_cd";
+                    dataSql +=" left join tb_release_order_storage od on od.release_order_no = b.release_order_no";
+                    dataSql +=" left join vw_ma_item item on item.item_cd = b.item_cd";
+                    dataSql +=" left join tb_product_serial serial on serial.serial_id = b.serial_id";
+                    dataSql +=" left join tb_ma_wh wh on wh.wh_cd = a.start_wh_cd and wh.use_yn = 'Y'";
+                    dataSql +=" left join vw_ma_code_release_status rs on rs.release_status = a.release_status";
+                    dataSql +=" left join vw_ma_item_parts_option ot1 on ot1.option_item_cd = b.option_1 and ot1.item_cd = b.item_cd and ot1.parts_option_type = 'W'";
+                    dataSql +=" left join vw_ma_item_parts_option ot3 on ot3.option_item_cd = b.option_3 and ot3.item_cd = b.item_cd and ot3.parts_option_type = 'H'";
+                    dataSql +=" LEFT JOIN tb_manufacture_work z ON z.prod_item_cd  = b.item_cd AND z.serial_id  = b.serial_id ";/*Cuong add for printing 2024-01-03*/
+                    dataSql +=" group by a.release_no, b.sorder with rollup) a";
+                    dataSql +=" where a.sorder is not null)) a WHERE";
+                    dataSql +=" a.release_no = '"+releaseNo+"'";
+                    dataSql +=" ORDER BY";
+                    dataSql +=" concat(";
+                    dataSql +=" SUBSTRING( a.release_no, 1, 7 ),";
+                    dataSql +=" SUBSTRING( a.release_no, 9, 3 ))";
+                  List<Map<String, Object>> data = selectAllQuery(conn,dataSql);
+                 
+                  String dataSql1;
+                  String dataSql2;
+                  String dataSql3;
+                  List <List> list_total = new ArrayList<>();
+                  List <List> list_336 = new ArrayList<>();
+                  List <List> list_last_print_page = new ArrayList<>();
+                  for(int i = 0 ; i < data.size() ; i ++){
+                     List<Map<String, Object>> item_data = new ArrayList<>();
+                     List<Map<String, Object>> print_336_data = new ArrayList<>();
+                     List<Map<String, Object>> last_print_page_data = new ArrayList<>();
 
-    public void info(String log) { 
-        logger.info("sinhwa : " + log);
-    }
-    
-    public void printStackTrace(Exception e) { 
-        info("=============================start printStackTrace=============================");
-        for (StackTraceElement element : e.getStackTrace()) {
-            info(element.toString());
+   
+                      String item_cd = data.get(i).get("item_cd").toString();
+                      String prod_type1 = data.get(i).get("prod_type1").toString();
+                      String serial_id = data.get(i).get("serial_id").toString();
+                      String sales_cd = data.get(i).get("sales_cd").toString();
+  
+                      dataSql1 = "select a.*,REPLACE(b.item_name, 'SIMBIZCOMMA', ',') item_name, b.spec,b.unit,b.sales_cd,b.prod_type1, ifnull(b.sales_cd, b.item_no) option_sales_cd from tb_ma_item_sale_option a JOIN vw_ma_item b on a.option_item_cd  = b.item_cd where a.option_item_type = 'PROD' and a.prod_option_type = '부대품' and a.item_cd = '"+item_cd+"'";
+                      item_data = selectAllQuery(conn, dataSql1);
+                      list_total.add(item_data);
+                      
+                      dataSql2 = "select item.prod_type1 ";
+                      dataSql2 += "  , REPLACE(item.carcass_cd, 'SIMBIZCOMMA', ',') carcass_cd ";
+                      dataSql2 += "  , item.sales_cd ";
+                      dataSql2 += "  , serial.invoice_no ";
+                      dataSql2 += "  , store.store_date ";
+                      dataSql2 += "  , serial.machine_no ";
+                      dataSql2 += "  , serial.built_no ";
+                      dataSql2 += "  , serial.engine_no ";
+                      dataSql2 += "  , ng.status ";
+                      dataSql2 += "  , ng.ng_area ";
+                      dataSql2 += "  , ng.ng_type ";
+                      dataSql2 += "  , ng.ng_reason ";
+                      dataSql2 += "  , ifnull(ng.ng_files,'') ng_files ";
+                      dataSql2 += "  , usm.USERNAME as ng_manager ";
+                      dataSql2 += "  , ng.ng_date ";
+                      dataSql2 += "  , ng.handle_reason ";
+                      dataSql2 += "  , ifnull(ng.handle_files,'') handle_files ";
+                      dataSql2 += "  , us.USERNAME as handle_manager ";
+                      dataSql2 += "  , ng.handle_date ";
+                      dataSql2 += "  , ng.createuser ";
+                      dataSql2 += "  , ng.createdate ";
+                      dataSql2 += "  , ng.updateuser ";
+                      dataSql2 += "  , ng.updatedate ";
+                      dataSql2 += "  , ng.release_ng_no ";
+                      dataSql2 += "  , '' pdf_file ";
+                      dataSql2 += "  ,date(now()) as print_date ";
+                      dataSql2 += "  ,item.cust_cd ";
+                      dataSql2 += "           from tb_release_ng ng ";
+                      dataSql2 += "           left join vw_ma_item item on item.item_cd = ng.item_cd ";
+                      dataSql2 += "           left join tb_product_serial serial on serial.serial_id = ng.serial_id ";
+                      dataSql2 += "           left join tb_product_store store on store.item_cd = ng.item_cd and store.serial_id = ng.serial_id ";
+                      dataSql2 += "           left join vw_cm_usermaster usm on ng.ng_manager = usm.UID ";
+                      dataSql2 += "           left join vw_cm_usermaster us on ng.handle_manager = us.UID ";
+                      dataSql2 += "           where 1 = 1 and ng.item_cd = '"+item_cd+"' ";
+                      dataSql2 += "           and ng.serial_id  = '"+serial_id+"'";
+                      print_336_data = selectAllQuery(conn, dataSql2);
+                      
+                      list_336.add(print_336_data);
+                      
+                      dataSql3 ="";
+                      dataSql3 +="select a.item_cd, ";
+                      dataSql3 +="      a.check_type, ";
+                      dataSql3 +=" a.sorder, ";
+                      dataSql3 +=" a.sort_no, ";
+                      dataSql3 +=" a.check_title, ";
+                      dataSql3 +=" a.check_item, ";
+                      dataSql3 +=" a.content, ";
+                      dataSql3 +=" a.remark, ";
+                      dataSql3 +=" a.createuser, ";
+                      dataSql3 +=" a.createdate, ";
+                      dataSql3 +=" a.updateuser, ";
+                      dataSql3 +=" a.updatedate ";
+                      dataSql3 +=" from tb_ma_item_check_list a ";
+                      dataSql3 +=" where a.item_cd = '"+item_cd+"' ";
+                      dataSql3 +=" and a.check_type = '하차검사' ";
+                      dataSql3 +=" order by a.sort_no asc ";
+                      
+                      last_print_page_data= selectAllQuery(conn, dataSql3);
+                      list_last_print_page.add(last_print_page_data);
+                  }
+                 
+                  dataSql = "select cust_name, tel_no, address, ceo_name from tb_ma_cust where cust_cd = 'YNK00132'";
+                  Map<String, Object> driver_data = selectFirstQuery(conn, dataSql);
+                  
+                
+                Map<String, Object> response_data = new HashMap<>();
+                response_data.put("status", 200);
+                response_data.put("message", "OK");
+                response_data.put("res", data);
+                response_data.put("driver", driver_data);
+                response_data.put("item", list_total);
+                response_data.put("list_336", list_336);
+                response_data.put("list_last_print_page", list_last_print_page);
+                response_data.put("sql", dataSql);
+                String jsonString = new Gson().toJson(response_data);
+                out.write(jsonString);
         }
-        info("=============================end   printStackTrace=============================");
     }
+             
 
-    public void setRequestData(javax.servlet.http.HttpServletRequest request) {
-        try {
-            referer         = URLEncoder.encode(request.getHeader("referer"));// 접속 경로
-            userAgent       = request.getHeader("User-Agent");// 시스템 정보
-            host            = request.getHeader("host"); // 접속 ip
-            wlProxyClientIp = request.getHeader("WL-Proxy-Client-IP");
-            proxyClientIp   = request.getHeader("Proxy-Client-IP");
-            xForwardedFor   = request.getHeader("X-Forwarded-For"); // 클라이언트 ip 주소 가져오기        
-            MENUCODE        = getMenuCode(request.getHeader("referer"));
-        } catch (Exception e) {
-            info("Exception" + e.toString());
-            printStackTrace(e);
-        }
-    }
-    
-    public String getColumn(Map<String, Object> map, String columnName) { 
-        String returnValue = null;
-        if (map.get(columnName) == null || map.get(columnName).toString().equals("")) {
-            returnValue = "NULL";
-        } else {
-            String columnValue = map.get(columnName).toString();
-            columnValue = columnValue.replaceAll("%", "SIMBIZPER");
-            columnValue = columnValue.replaceAll("'", "SIMBIZSQT");
-            columnValue = columnValue.replaceAll("\"", "SIMBIZDQT");
-            columnValue = columnValue.replaceAll(",", "SIMBIZCOMMA");
-            columnValue = columnValue.replaceAll("=", "SIMBIZEQ");
-            returnValue = "'" + columnValue + "'";
-        }
-        return returnValue; 
-    }
-    
-    
-    public String getLastDate(String poDatetime) {
-        String dateString = poDatetime.substring(0, 7); 
-        YearMonth yearMonth = YearMonth.parse(dateString);
-
-        LocalDate lastDayOfMonth = yearMonth.atEndOfMonth();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String formattedLastDay = lastDayOfMonth.format(formatter);
-        
-        return formattedLastDay;
-    }
-    
-    
-    
-
-    
-    
-    /*
-    
-    static String STOCK_STORE = "STORE";        //구매입고
-    static String STOCK_MOVE_IN = "MOVE_IN";    //이동입고
-    static String STOCK_ETC_IN = "ETC_IN";      //기타입고
-    static String STOCK_MANUFACTURE_START = "MANUFACTURE_START";    //상품화시작
-    static String STOCK_MANUFACTURE_END = "MANUFACTURE_END";        //상품화종료
-    static String STOCK_SALE = "SALE";            //판매(대리점출하)
-    static String STOCK_MOVE_OUT = "MOVE_OUT";    //이동출고
-    static String STOCK_ETC_OUT = "ETC_OUT";      //기타출고
-    
-    public String stockControl(java.sql.Connection pConn, String controlType, Map<String, Object> map) { 
-        if(STOCK_STORE.equals(controlType)) {
-            Map<String, Object> param = new HashMap<String, Object>();
-        
-            param.put("stock_id", getSOrder(pConn, "select ifnull(max(stock_id), 0) + 1 from tb_stock "));
-            param.put("item_cd", map.get("item_cd"));       // required
-            param.put("ynk_yn", "Y");
-            param.put("wh_cd", map.get("wh_cd"));       // required
-            param.put("area_cd", map.get("area_cd"));   // option
-            param.put("rack_cd", map.get("rack_cd"));   // option
-            param.put("stock_store_type", map.get("구매입고"));
             
-            Object item_type = map.get("item_type");
-            if(checkEmpty(item_type)) {
-                item_type = getSOrder(pConn, "select item_type from tb_ma_item where item_cd = '" + map.get("item_cd") + "' ");
+        } catch (Throwable throwable) {
+            if (conn != null) {
+                conn.rollback();
+                logger.info("!!!!ROLLBACK DONE!!!!");
             }
-            param.put("item_type", item_type);
-            if("PROD".equals(item_type)) {
-                param.put("product_stock_type", map.get("판매용"));
-                param.put("product_store_id", map.get("product_store_id"));     // required
-                param.put("serial_id", map.get("serial_id"));                   // required
-                
-                if(checkEmpty(map.get("ship_doc_id"))) {
-                    param.put("ship_doc_id", getSOrder(pConn, "select ship_doc_id from tb_product_serial where serial_id = " + map.get("serial_id") + " "));            
-                }
-                else{
-                    param.put("ship_doc_id", map.get("ship_doc_id"));               
-                }
-                
-                if(checkEmpty(map.get("built_date"))) {
-                    param.put("built_date", getSOrder(pConn, "select built_date from tb_product_serial where serial_id = " + map.get("serial_id") + " "));            
-                }
-                else{
-                    param.put("built_date", map.get("built_date"));               
-                }
-                
-                String prod_etc1 = getSOrder(pConn, "select prod_etc1 from tb_ma_item where item_cd = '" + map.get("item_cd") + "' ");
-                if("대상".equals(prod_etc1)) {
-                    param.put("manufacture_yn", "N");
-                }
-                else {
-                    param.put("manufacture_yn", "Y");
-                }
-                
-                
-            }
-            else {
-                param.put("parts_store_id", map.get("parts_store_id"));             // required
-                param.put("parts_store_sorder", map.get("parts_store_sorder"));     // required
-            }
-            
-            param.put("po_no", map.get("po_no"));               // required
-            param.put("delv_no", map.get("delv_no"));           // required
-            param.put("delv_sorder", map.get("delv_sorder"));   // required
-            param.put("store_date", map.get("store_date"));     // required
-            param.put("store_qty", map.get("store_qty"));       // required
-            param.put("move_in_qty", 0);
-            param.put("etc_in_qty", 0);
-            param.put("stock_qty", map.get("store_qty"));
-            param.put("manufacturing_qty", 0);
-            param.put("moving_qty", 0);
-            param.put("sale_qty", 0);
-            param.put("move_out_qty", 0);
-            param.put("etc_out_qty", 0);
-            param.put("manufacture_in_qty", 0);
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            param.put("", map.get(""));
-            
+            throw throwable;
+        } finally {
+            if (conn != null) conn.close();
+            if (pstmt != null) pstmt.close();
         }
-        else if(STOCK_MOVE_IN.equals(controlType)) {
-            
-        }
-        else if(STOCK_ETC_IN.equals(controlType)) {
-            
-        }
-        else if(STOCK_MANUFACTURE_START.equals(controlType)) {
-            
-        }
-        else if(STOCK_MANUFACTURE_END.equals(controlType)) {
-            
-        }
-        else if(STOCK_SALE.equals(controlType)) {
-            
-        }
-        else if(STOCK_MOVE_OUT.equals(controlType)) {
-            
-        }
-        else if(STOCK_ETC_OUT.equals(controlType)) {
-            
-        }
+    } catch (Exception e) {
+        out.write("error : " + e.getMessage().toString() + "\n");
+        if (conn != null) conn.close();
+        if (pstmt != null) pstmt.close();
     }
-    
-    */
-    
-    
 %>
