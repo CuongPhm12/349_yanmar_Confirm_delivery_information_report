@@ -8,6 +8,7 @@ $(".336-print2").hide();
 $(".last_page0").hide();
 $(".last_page1").hide();
 $(".last_page2").hide();
+$("#data_tbl").parent().parent().css({ width: "fit-content" });
 
 getData();
 function getData() {
