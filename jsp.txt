@@ -639,8 +639,8 @@
                   dataSql = "select cust_name, tel_no, address, ceo_name from tb_ma_cust where cust_cd = 'YNK00132'";
                   Map<String, Object> driver_data = selectFirstQuery(conn, dataSql);
                   
-                String dataSql4 = "select DATE_FORMAT(ifnull(updatedate,CURDATE()),'%Y년 %c월') as date_on_top from tb_ma_item_sale_option where item_cd = '" + item_Code +"' group by item_cd";
-                Map<String, Object> date_data = selectFirstQuery(conn, dataSql4);
+                String dataSql4 = "select max(DATE_FORMAT(ifnull(updatedate,CURDATE()),'%Y년 %c월')) as date_on_top from tb_ma_item_sale_option where item_cd = '" + item_Code +"' ";
+                List<Map<String, Object>> date_data = selectAllQuery(conn, dataSql4);
                 
                 Map<String, Object> response_data = new HashMap<>();
                 response_data.put("status", 200);

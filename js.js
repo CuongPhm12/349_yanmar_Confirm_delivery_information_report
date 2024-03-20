@@ -44,9 +44,9 @@ function getData() {
       const { res, sql, driver, item, list_336, list_last_print_page, date } =
         response;
       console.log(response);
-      console.log(list_336[0].length);
-      let date_on_top = date.date_on_top;
 
+      let date_on_top = date[0].date_on_top;
+      console.log(date_on_top);
       if (list_336[0].length == 0) {
         $("#no_line_1").css({
           "font-weight": "bold",
@@ -487,9 +487,9 @@ function getData() {
         let sales_cd_extra = item.sales_cd || "";
         let machine_no_extra = item.machine_no || "";
         for (let j = 0; j < list_last_print_page.length; j++) {
-          $("#prod_type1_last_page" + j).text(
-            prod_type1_extra + " 하차(입고)검사 기준서"
-          );
+          $("#prod_type1_last_page" + j)
+            .text(prod_type1_extra + " 하차(입고)검사 기준서")
+            .css({ "font-weight": "bold" });
           $("#sales_cd_last_page" + j).text("※모델: " + sales_cd_extra);
           $("#machine_no_last_page" + j).text(
             "(기대번호: " + machine_no_extra + ")"
@@ -508,7 +508,9 @@ function getData() {
       $("#delv_comp_name_id").text(delv_comp_name);
       $("#delv_comp_name_id_2").text(delv_comp_name);
       $("#delv_comp_phone_id").text(delv_comp_phone);
-      $("#delv_comp_addr_id").text(delv_comp_addr);
+      $("#delv_comp_addr_id")
+        .text(delv_comp_addr)
+        .css({ "padding-left": "10px" });
       $("#ceo_name_id").text(ceo_name);
       $("#release_qty_no").text(total);
 
