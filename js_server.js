@@ -30,7 +30,7 @@ $("#search_btn").trigger("click");
 
 $("#cust_btn4").on("click", function (event) {
   const selectedRow = grid1.getCheckedRows();
-
+  // $("#print_btn").trigger("click");
   if (selectedRow.length === 1) {
     // if (selectedRow[itmobj1["load_finish_date"]] == null) {
     //   msg("아직 상차확정이 완료되지 않았습니다.");
@@ -53,9 +53,9 @@ $("#cust_btn4").on("click", function (event) {
 
     $("#print_btn").trigger("click");
   }
-  if ($("#msgconfirm").is(":visible")) {
-    $("#msgconfirm").dialog("destroy");
-  }
+  //   if ($("#msgconfirm").is(":visible")) {
+  //     $("#msgconfirm").dialog("destroy");
+  //   }
 });
 
 // grid1.on("check uncheck", function() {
@@ -101,6 +101,82 @@ grid1.on("uncheck", function (event) {
   }
 });
 
+var load_type_column =
+  grid1.getColumns()[grid1.getIndexOfColumn(itmobj1["load_type"])];
+load_type_column.onAfterChange = function (event) {
+  var value = grid1.getValue(event.rowKey, itmobj1["load_type"]);
+  var release_no = grid1.getValue(event.rowKey, itmobj1["release_no"]);
+
+  var gd1 = grid1.getRows();
+  for (var i = 0; i < gd1.length; i++) {
+    var item = gd1[i];
+    if (item.rowKey == event.rowKey) {
+      continue;
+    }
+
+    if (release_no == grid1.getValue(item.rowKey, itmobj1["release_no"])) {
+      grid1.setValue(item.rowKey, itmobj1["load_type"], value);
+    }
+  }
+};
+
+var driver_name_column =
+  grid1.getColumns()[grid1.getIndexOfColumn(itmobj1["driver_name"])];
+driver_name_column.onAfterChange = function (event) {
+  var value = grid1.getValue(event.rowKey, itmobj1["driver_name"]);
+  var release_no = grid1.getValue(event.rowKey, itmobj1["release_no"]);
+
+  var gd1 = grid1.getRows();
+  for (var i = 0; i < gd1.length; i++) {
+    var item = gd1[i];
+    if (item.rowKey == event.rowKey) {
+      continue;
+    }
+
+    if (release_no == grid1.getValue(item.rowKey, itmobj1["release_no"])) {
+      grid1.setValue(item.rowKey, itmobj1["driver_name"], value);
+    }
+  }
+};
+
+var driver_tel_no_column =
+  grid1.getColumns()[grid1.getIndexOfColumn(itmobj1["driver_tel_no"])];
+driver_tel_no_column.onAfterChange = function (event) {
+  var value = grid1.getValue(event.rowKey, itmobj1["driver_tel_no"]);
+  var release_no = grid1.getValue(event.rowKey, itmobj1["release_no"]);
+
+  var gd1 = grid1.getRows();
+  for (var i = 0; i < gd1.length; i++) {
+    var item = gd1[i];
+    if (item.rowKey == event.rowKey) {
+      continue;
+    }
+
+    if (release_no == grid1.getValue(item.rowKey, itmobj1["release_no"])) {
+      grid1.setValue(item.rowKey, itmobj1["driver_tel_no"], value);
+    }
+  }
+};
+
+var car_no_column =
+  grid1.getColumns()[grid1.getIndexOfColumn(itmobj1["car_no"])];
+car_no_column.onAfterChange = function (event) {
+  var value = grid1.getValue(event.rowKey, itmobj1["car_no"]);
+  var release_no = grid1.getValue(event.rowKey, itmobj1["release_no"]);
+
+  var gd1 = grid1.getRows();
+  for (var i = 0; i < gd1.length; i++) {
+    var item = gd1[i];
+    if (item.rowKey == event.rowKey) {
+      continue;
+    }
+
+    if (release_no == grid1.getValue(item.rowKey, itmobj1["release_no"])) {
+      grid1.setValue(item.rowKey, itmobj1["car_no"], value);
+    }
+  }
+};
+
 $("#reset_btn").on("click", function () {
   $(`#${itmobj1["from_ser"]}`).val(moment().format("YYYY-MM-01"));
   $(`#${itmobj1["to_ser"]}`).val(moment().format("YYYY-MM-DD"));
@@ -140,6 +216,10 @@ $("#cust_btn2").on("click", function () {
     $("#DUMMY5").val(gd1[0][itmobj1["name_plate"]]);
     $("#DUMMY6").val(gd1[0][itmobj1["approval_no"]]);
   }
+});
+
+grid1.on("beforeRequestnet", function (ev) {
+  console.log(ev);
 });
 
 $(window).on("resize", function () {

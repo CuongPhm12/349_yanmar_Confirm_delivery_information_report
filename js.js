@@ -25,12 +25,15 @@ function getData() {
   let car_no = $("#car_no").text().trim();
   let driver_tel_no = $("#driver_tel_no").text().trim();
   let load_type = $("#load_type").text().trim();
+  let agency_order_no = $("#agency_order_no_id").text().trim();
+  let item_cd = $("#item_cd_id").text().trim();
+  let currentYear = new Date().getFullYear();
 
   // console.log(load_finish_date)
   const data_Send = {};
   data_Send.menucode = "M000000349";
   data_Send.type = "get_data";
-  data_Send.header = JSON.stringify({ releaseNo: releaseNo });
+  data_Send.header = JSON.stringify({ releaseNo: releaseNo, item_cd: item_cd });
   $.ajax({
     type: "post",
     dataType: "JSON",
@@ -38,9 +41,23 @@ function getData() {
     data: data_Send,
     async: false,
     success: function (response, status, request) {
-      const { res, sql, driver, item, list_336, list_last_print_page } =
+      const { res, sql, driver, item, list_336, list_last_print_page, date } =
         response;
       console.log(response);
+      console.log(list_336[0].length);
+      let date_on_top = date.date_on_top;
+
+      if (list_336[0].length == 0) {
+        $("#no_line_1").css({
+          "font-weight": "bold",
+          "text-decoration": "underline",
+        });
+        $("#no_line_2").css({
+          "font-weight": "bold",
+          "text-decoration": "underline",
+        });
+      }
+      //   console.log(date_on_top);
       for (let a = 0; a < list_336.length; a++) {
         for (let b = 0; b < list_336[a].length; b++) {
           if (!list_336[a][b] || !list_336[a][b].ng_type) {
@@ -378,8 +395,12 @@ function getData() {
         let sales_cd = item_res.sales_cd || "";
         let prod_type1 = item_res.prod_type1 || "";
         for (let j = 0; j < item.length; j++) {
-          $("#item_name" + j).text("제품명 :" + prod_type1);
-          $("#sale_code" + j).text("형식명 :" + sales_cd);
+          $("#item_name" + j)
+            .text("제품명: " + prod_type1)
+            .css({ "font-weight": "bold", "font-size": "15px" });
+          $("#sale_code" + j)
+            .text("형식명: " + sales_cd)
+            .css({ "font-weight": "bold", "font-size": "15px" });
         }
       }
 
@@ -411,10 +432,9 @@ function getData() {
 
         let newRow = `
               <tr class="rowsrepeat"  style="height: 40px;text-align: center;">
-                      <td style="width: 129px;  text-align: center">${prod_type1}</td>
-                      <td style="width: 319.219px;"><span class="sales_cd">${sales_cd}</span></td>
-                      <td style="width: 62.7812px;"><span class="spec"></span></td>
-                      <td style="width: 37px; "><span class="release_qty">${release_qty}</span></td>
+                      <td style="width: 120px;  text-align: center">${prod_type1}</td>
+                      <td style="width: 380px;"><span class="sales_cd">${sales_cd}</span></td>
+                      <td style="width: 40px;text-align: right;padding-right:10px "><span class="release_qty">${release_qty}</span></td>
                       <td style="width: 89px; "><span class="machine_no">${machine_no}</span></td>
                       <td style="width: 72px; "><span class="built_no">${built_no}</span></td>
                       <td style="width: 73px; "><span class="plate_no3">${plate_no3}</span></td>
@@ -446,9 +466,9 @@ function getData() {
             let newRow = `
                                   <tr class="rowsrepeat"  style="height: 40px;">
                                         <td style="width: 57.775px; height: 35px; text-align: center;">${check_title}</td>
-                                        <td style="width: 198.288px; height: 35px;">${check_item}</td>
-                                        <td style="width: 505.95px; height: 35px;">${content}</td>
-                                        <td style="width: 122.162px; height: 35px; text-align: center;">합 ,  부</td>
+                                        <td style="width: 198.288px; height: 35px;padding-left: 8px;">${check_item}</td>
+                                        <td style="width: 505.95px; height: 35px;padding-left: 8px;">${content}</td>
+                                        <td style="width: 122.162px; height: 35px; text-align: center;">합,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;부</td>
                                         <td style="width: 101.625px; height: 35px;"> </td>
                                     </tr>
                                     `;
@@ -459,7 +479,7 @@ function getData() {
         $("#tr_lv2_last_page" + k).after(is_completee_last_page);
       }
 
-      console.log(count_one, count_two);
+      //   console.log(count_one, count_two)
 
       for (let i = 0; i < res.length; i++) {
         let item = res[i];
@@ -483,7 +503,7 @@ function getData() {
       $("#tr_lv2").after(is_completee);
       //   $("#tr_lv2_last_page0").after(is_completee_last_page);
 
-      $("#release_no_id").text(releaseNo);
+      $("#release_no_id").text(agency_order_no + "(" + releaseNo + ")");
       $("#date_ko_render").text(release_order_date_ko);
       $("#delv_comp_name_id").text(delv_comp_name);
       $("#delv_comp_name_id_2").text(delv_comp_name);
@@ -506,22 +526,70 @@ function getData() {
           "</span>"
       );
 
-      $("#driver_name_id_sub0").text("운전자명 : " + driver_name);
-      $("#driver_name_id_sub1").text("운전자명 : " + driver_name);
-      $("#driver_name_id_sub2").text("운전자명 : " + driver_name);
+      $("#driver_name_id_sub0").text("운전자명:  " + driver_name);
+      $("#driver_name_id_sub1").text("운전자명:  " + driver_name);
+      $("#driver_name_id_sub2").text("운전자명:  " + driver_name);
       $("#car_no_id_sub0").text(car_no);
       $("#car_no_id_sub1").text(car_no);
       $("#car_no_id_sub2").text(car_no);
-      $("#agency_name_id_sub0").text(region + " " + agency_name);
-      $("#agency_name_id_sub1").text(region + " " + agency_name);
-      $("#agency_name_id_sub2").text(region + " " + agency_name);
-      $("#end_agency_address_id_sub0").text(end_agency_address);
-      $("#end_agency_address_id_sub1").text(end_agency_address);
-      $("#end_agency_address_id_sub2").text(end_agency_address);
+      $("#agency_name_id_sub0")
+        .text(region + " " + agency_name)
+        .css({ "padding-left": "10px" });
+      $("#agency_name_id_sub1")
+        .text(region + " " + agency_name)
+        .css({ "padding-left": "10px" });
+      $("#agency_name_id_sub2")
+        .text(region + " " + agency_name)
+        .css({ "padding-left": "10px" });
+      $("#end_agency_address_id_sub0")
+        .text(end_agency_address)
+        .css({ "padding-left": "10px" });
+      $("#end_agency_address_id_sub1")
+        .text(end_agency_address)
+        .css({ "padding-left": "10px" });
+      $("#end_agency_address_id_sub2")
+        .text(end_agency_address)
+        .css({ "padding-left": "10px" });
 
-      $("#date_ko_render_sub0").text("출하일자 : " + release_order_date_ko);
-      $("#date_ko_render_sub1").text("출하일자 : " + release_order_date_ko);
-      $("#date_ko_render_sub2").text("출하일자 : " + release_order_date_ko);
+      $("#date_ko_render_sub0")
+        .text("출하일자 : " + release_order_date_ko)
+        .css({ "font-weight": "bold", "font-size": "15px" });
+      $("#date_ko_render_sub1")
+        .text("출하일자 : " + release_order_date_ko)
+        .css({ "font-weight": "bold", "font-size": "15px" });
+      $("#date_ko_render_sub2")
+        .text("출하일자 : " + release_order_date_ko)
+        .css({ "font-weight": "bold", "font-size": "15px" });
+
+      $("#date_text0").text(
+        "※아래 부대품 지급내역은 " + date_on_top + " 기준입니다 "
+      );
+      $("#date_text1").text(
+        "※아래 부대품 지급내역은 " + date_on_top + " 기준입니다 "
+      );
+      $("#date_text2").text(
+        "※아래 부대품 지급내역은 " + date_on_top + " 기준입니다 "
+      );
+
+      $("#fix_date0")
+        .text(currentYear + " 년................월.................일")
+        .css({ "font-weight": "bold" });
+      $("#fix_date1")
+        .text(currentYear + " 년................월.................일")
+        .css({ "font-weight": "bold" });
+      $("#fix_date2")
+        .text(currentYear + " 년................월.................일")
+        .css({ "font-weight": "bold" });
+
+      $("#date_ko_render_bottom0")
+        .text("출하일자: " + release_order_date_ko)
+        .css({ "text-align": "right" });
+      $("#date_ko_render_bottom1")
+        .text("출하일자: " + release_order_date_ko)
+        .css({ "text-align": "right" });
+      $("#date_ko_render_bottom2")
+        .text("출하일자: " + release_order_date_ko)
+        .css({ "text-align": "right" });
 
       //  $("#item_name0").text("제품명 : "+release_order_date_ko);
       //  $("#item_name1").text("제품명 : "+release_order_date_ko);

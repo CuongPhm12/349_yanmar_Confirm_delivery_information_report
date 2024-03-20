@@ -88,7 +88,7 @@
                         
                         if (handle_type.equals("wh")) {
                             Map<String, String> row = getRow(conn, "simbizlocal", "tb_release_wh", list.get(i));
-                            
+/* 2024.03.19 by jplee : 해당 화면 조회시 없는 항목에 대해서 NULL로 업데이트 되는 문제가 있어서 해당 화면에서 UPDATE해야 하는 컬럼만 업데이트되도록 수정
                             Iterator<String> keys = row.keySet().iterator();
                             while(keys.hasNext()){
                                 String key = keys.next();
@@ -102,14 +102,16 @@
                                 }
                             }
                             sql = " update tb_release_wh set " + sqlDuplis + " where release_no = " + row.get("release_no");
+*/
+                            sql = " update tb_release_wh set load_type = " + row.get("load_type") + ", driver_name = " + row.get("driver_name") + ", driver_tel_no = " + row.get("driver_tel_no") + ", car_no = " + row.get("car_no") + " where release_no = " + row.get("release_no");
                             logger.info("update tb_release_wh");
                             logger.info(sql);
                             pstmt = conn.prepareStatement(sql);
                             pstmt.executeUpdate();
                             addHistory("update", sql);
                             
-                            if (!row.get("load_type").equals("NULL") || !row.get("driver_name").equals("NULL") || !row.get("driver_tel_no").equals("NULL") || !row.get("car_no").equals("NULL")) {
-                                sql =  " update tb_release_order_wh a join tb_release_wh_detail b on b.release_order_no = a.release_order_no set a.release_order_status = '완료' where b.release_no = " + row.get("release_no");
+                            //if (!row.get("load_type").equals("NULL") || !row.get("driver_name").equals("NULL") || !row.get("driver_tel_no").equals("NULL") || !row.get("car_no").equals("NULL")) {
+                                sql =  " update tb_release_order_wh a join tb_release_wh_detail b on b.release_order_no = a.release_order_no set a.release_order_status = '배차확정' where b.release_no = " + row.get("release_no");
                                 logger.info("update tb_release_order_wh");
                                 logger.info(sql);
                                 pstmt = conn.prepareStatement(sql);
@@ -128,11 +130,11 @@
                                 pstmt = conn.prepareStatement(sql);
                                 pstmt.executeUpdate();
                                 */
-                            }
+                            //}
                         }
                         if (handle_type.equals("storage")) {
                             Map<String, String> row = getRow(conn, "simbizlocal", "tb_release_storage", list.get(i));
-                            
+/* 2024.03.19 by jplee : 해당 화면 조회시 없는 항목에 대해서 NULL로 업데이트 되는 문제가 있어서 해당 화면에서 UPDATE해야 하는 컬럼만 업데이트되도록 수정
                             Iterator<String> keys = row.keySet().iterator();
                             while(keys.hasNext()){
                                 String key = keys.next();
@@ -146,14 +148,16 @@
                                 }
                             }
                             sql = " update tb_release_storage set " + sqlDuplis + " where release_no = " + row.get("release_no");
+*/
+                            sql = " update tb_release_storage set load_type = " + row.get("load_type") + ", driver_name = " + row.get("driver_name") + ", driver_tel_no = " + row.get("driver_tel_no") + ", car_no = " + row.get("car_no") + " where release_no = " + row.get("release_no");
                             logger.info("update tb_release_storage");
                             logger.info(sql);
                             pstmt = conn.prepareStatement(sql);
                             pstmt.executeUpdate();
                             addHistory("update", sql);
                             
-                            if (!row.get("load_type").equals("NULL") || !row.get("driver_name").equals("NULL") || !row.get("driver_tel_no").equals("NULL") || !row.get("car_no").equals("NULL")) {
-                                sql =  " update tb_release_order_storage a join tb_release_wh_detail b on b.release_order_no = a.release_order_no set a.release_order_status = '완료' where b.release_no = " + row.get("release_no");
+                            //if (!row.get("load_type").equals("NULL") || !row.get("driver_name").equals("NULL") || !row.get("driver_tel_no").equals("NULL") || !row.get("car_no").equals("NULL")) {
+                                sql =  " update tb_release_order_storage a join tb_release_wh_detail b on b.release_order_no = a.release_order_no set a.release_order_status = '배차확정' where b.release_no = " + row.get("release_no");
                                 logger.info("update tb_release_order_storage");
                                 logger.info(sql);
                                 pstmt = conn.prepareStatement(sql);
@@ -163,16 +167,8 @@
                                 sql = "update tb_stock set release_order_date = ifnull(release_order_date, date_format(now(), '%Y-%m-%d')) where stock_id = " + list.get(i).get("stock_id");
                                 pstmt = conn.prepareStatement(sql);
                                 pstmt.executeUpdate();
-                            }
+                            //}
                         }
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
                     }
                 }
                 PassText = "저장 되었습니다.";
@@ -256,7 +252,11 @@
                             throw new Exception("운송비가 등록되어 있어서 취소불가합니다.");
                         }
                         
+                        
+                        
                         if (handle_type.equals("wh")) {
+                            
+                            
                             //update release order
                             sql =  " update tb_release_order_wh set release_order_status = '접수' where release_order_no = '" + list.get(i).get("release_order_no").toString() + "'";
                             logger.info("delete tb_release_order_wh");
@@ -267,6 +267,11 @@
                         
                             //header
                             Map<String, String> row = getRow(conn, "simbizlocal", "tb_release_wh", list.get(i));
+                            
+                            String cnt = getSOrder(conn, "select count(*) from tb_release_wh_detail where ifnull(load_finish_yn, 'N') = 'Y' and release_no = " + row.get("release_no"));
+                            if(!"0".equals(cnt)) {
+                                throw new Exception("상차확정되어 취소불가합니다.");
+                            }
                             
                             //update tb_agency_order
                             sql =  " update tb_agency_order a join tb_release_wh_detail b on b.agency_order_no = a.agency_order_no set a.agency_order_status = '출하의뢰' where b.release_no = " + row.get("release_no");
@@ -285,6 +290,16 @@
                             pstmt = conn.prepareStatement(sql);
                             pstmt.executeUpdate();
                             addHistory(sql);
+                            
+                            
+                            sql = "update tb_release_wh_detail set load_check_yn = null, load_check_date = null, load_check_media = null where release_no = " + row.get("release_no");
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            
+                            sql = "delete from tb_release_wh_sales_option where release_no = " + row.get("release_no");
+                            pstmt = conn.prepareStatement(sql);
+                            pstmt.executeUpdate();
+                            
                         }
                         if (handle_type.equals("storage")) {
                             //update release order
@@ -324,6 +339,7 @@
                 if(header != null){
                     JSONObject searchValue = new JSONObject(header);
                     String releaseNo = searchValue.getString("releaseNo").toString();
+                     String item_Code = searchValue.getString("item_cd").toString();
                     String dataSql = "select * ";
                     dataSql +=" from ( ";
                     dataSql +=" (select ";
@@ -623,6 +639,8 @@
                   dataSql = "select cust_name, tel_no, address, ceo_name from tb_ma_cust where cust_cd = 'YNK00132'";
                   Map<String, Object> driver_data = selectFirstQuery(conn, dataSql);
                   
+                String dataSql4 = "select DATE_FORMAT(ifnull(updatedate,CURDATE()),'%Y년 %c월') as date_on_top from tb_ma_item_sale_option where item_cd = '" + item_Code +"' group by item_cd";
+                Map<String, Object> date_data = selectFirstQuery(conn, dataSql4);
                 
                 Map<String, Object> response_data = new HashMap<>();
                 response_data.put("status", 200);
@@ -632,6 +650,7 @@
                 response_data.put("item", list_total);
                 response_data.put("list_336", list_336);
                 response_data.put("list_last_print_page", list_last_print_page);
+                response_data.put("date", date_data);
                 response_data.put("sql", dataSql);
                 String jsonString = new Gson().toJson(response_data);
                 out.write(jsonString);
